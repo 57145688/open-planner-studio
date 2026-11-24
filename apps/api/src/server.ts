@@ -20,6 +20,7 @@ import {
 import { ProjectStore } from './store';
 import { createAiRouter } from './aiRoutes';
 import { createOptimizerRouter } from './optimizerRoutes';
+import { createProgressRouter } from './progressRoutes';
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,7 @@ app.use(
   '/api/ai',
   createAiRouter({ getProject: () => activeProject, commitProject }),
 );
+app.use('/api/progress', createProgressRouter(() => activeProject, commitProject));
 
 /** 真实案例资产目录（仓库内 examples/reality）。 */
 const realityCaseDir = fileURLToPath(new URL('../../../examples/reality/', import.meta.url));

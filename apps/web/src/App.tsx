@@ -8,6 +8,7 @@ import { BimViewer } from './components/BimViewer';
 import { CostPanel } from './components/CostPanel';
 import { DataPanel } from './components/DataPanel';
 import { OptimizerPanel } from './components/OptimizerPanel';
+import { ProgressSuggestionPanel } from './components/ProgressSuggestionPanel';
 import { RealCasePanel } from './components/RealCasePanel';
 import { RealityPanel } from './components/RealityPanel';
 import {
@@ -127,6 +128,8 @@ export default function App() {
           summary={data.reality}
           dataDate={data.project.dataDate}
         />
+
+        <ProgressSuggestionPanel data={data} onApplied={handleCommitted} />
 
         <div className="grid-three">
           <section className="panel">

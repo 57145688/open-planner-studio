@@ -42,7 +42,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="sidebar-footer">
-        <div className="phase-chip">当前：阶段 4 优化与 AI 网关</div>
+        <div className="phase-chip">当前：阶段 5 实景核验与进度识别</div>
         <p>数据为演示用模拟数据，不代表真实工程。</p>
         <p>目标架构：方案 B · 首期落地：方案 A</p>
       </div>
@@ -296,7 +296,7 @@ export function PhasePanel() {
     { name: '阶段 2 · BIM / 4D 构件绑定', status: 'done' },
     { name: '阶段 3 · 5D 成本与 EVM 预测', status: 'done' },
     { name: '阶段 4 · AI 网关与 OR-Tools 优化', status: 'done' },
-    { name: '阶段 5 · 无人机实景核验（模拟点云先行）', status: 'done' },
+    { name: '阶段 5 · 无人机实景核验与进度识别', status: 'done' },
   ];
   return (
     <div className="panel">

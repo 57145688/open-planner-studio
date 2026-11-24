@@ -12,5 +12,6 @@ export * from './reality';
 export * from './realcase';
 export * from './optimizer';
 export * from './ai';
+export * from './progressEvidence';
 export * from './sample';
 export * from './formats/mspdi';

@@ -65,6 +65,23 @@ export interface RealitySummary {
 export interface RealityCapture {
   summary: RealitySummary;
   points: RealityPoint[];
+  /** 构件级证据：用设计表面采样与实景点云占用比对得到的覆盖率。 */
+  evidence: RealityElementEvidence[];
+}
+
+/** 构件级实景证据，供进度识别与缺口分析使用。 */
+export interface RealityElementEvidence {
+  elementGuid: string;
+  name: string;
+  ifcType: BimElement['ifcType'];
+  level: number;
+  activityId: string;
+  /** 设计表面被实景点云覆盖的比例，0..1 */
+  coverage: number;
+  meanDeviation: number;
+  maxDeviation: number;
+  samples: number;
+  covered: number;
 }
 
 interface RealityOptions {
@@ -237,7 +254,7 @@ export function buildRealityCapture(
   const points: RealityPoint[] = [];
   const elementStats = new Map<
     string,
-    { deviation: number; count: number; matched: number }
+    { deviation: number; maxDeviation: number; count: number; matched: number }
   >();
   const levelStats = new Map<number, { expected: number; observed: number; matched: number }>();
   for (const level of model.levels) {
@@ -255,6 +272,7 @@ export function buildRealityCapture(
     let count = 0;
     let matchedCount = 0;
     let deviationSum = 0;
+    let maxDeviation = 0;
 
     for (let attempt = 0; attempt < density * 3 && count < density; attempt += 1) {
       const base = sampleSurface(element, random, progress);
@@ -279,11 +297,13 @@ export function buildRealityCapture(
       count += 1;
       if (matched) matchedCount += 1;
       deviationSum += deviation;
+      maxDeviation = Math.max(maxDeviation, deviation);
     }
 
     if (count > 0) {
       elementStats.set(element.guid, {
         deviation: deviationSum / count,
+        maxDeviation,
         count,
         matched: matchedCount,
       });
@@ -387,7 +407,45 @@ export function buildRealityCapture(
     note: `按实际完成比例合成，构件缺失 ${missing.size} 个；设计表面体素 ${VOXEL * 1000} mm，容差 ${TOLERANCE * 1000} mm。`,
   };
 
-  return { summary, points };
+  // 构件级证据：模拟点云按“已采样到的表面范围”估计完成度。
+  // - 竖向构件（柱/墙/门窗）用点云最高点相对构件底部的比例估计完成度；
+  // - 水平构件（板/梁/基础）在合成环境中是全有或全无，按是否存在点判定；
+  // - 缺失构件覆盖率为 0，偏移构件保留偏差，供证据缺口使用。
+  // 真实点云可直接替换为表面采样覆盖率（见 progressEvidence.evidenceFromRealityCapture）。
+  const maxZByElement = new Map<string, number>();
+  for (const point of realPoints) {
+    if (!point.elementGuid) continue;
+    const current = maxZByElement.get(point.elementGuid);
+    if (current === undefined || point.z > current) {
+      maxZByElement.set(point.elementGuid, point.z);
+    }
+  }
+
+  const evidence: RealityElementEvidence[] = model.elements.map((element) => {
+    const stats = elementStats.get(element.guid);
+    const minZ = element.position.z - element.size.z / 2;
+    const height = Math.max(1e-6, element.size.z);
+    let coverage = 0;
+    if (stats && stats.count > 0) {
+      coverage = isVertical(element)
+        ? Math.max(0, Math.min(1, ((maxZByElement.get(element.guid) ?? minZ) - minZ) / height))
+        : 1;
+    }
+    return {
+      elementGuid: element.guid,
+      name: element.name,
+      ifcType: element.ifcType,
+      level: element.level,
+      activityId: element.activityId,
+      coverage,
+      meanDeviation: stats?.deviation ?? 0,
+      maxDeviation: stats?.maxDeviation ?? 0,
+      samples: stats?.count ?? 0,
+      covered: stats?.count ?? 0,
+    };
+  });
+
+  return { summary, points, evidence };
 }
 
 /** 仅生成核验摘要，供仪表盘载荷使用，避免传输完整点云。 */

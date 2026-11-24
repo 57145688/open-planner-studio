@@ -1,10 +1,13 @@
 import {
   applyAiProposal,
   buildLocalProposals,
+  buildRealityCapture,
   computeDashboard,
   crashProject,
+  evidenceFromRealityCapture,
   levelResources,
   optimizeTimeCost,
+  suggestProgressFromEvidence,
   importMspdi,
   sampleProject,
 } from '@apcc/core';
@@ -14,6 +17,7 @@ import type {
   CrashResult,
   DashboardPayload,
   LevelingResult,
+  ProgressSuggestionResult,
   Project,
 } from '@apcc/core';
 
@@ -404,4 +408,55 @@ export async function loadAiStatus(): Promise<AiStatus | null> {
   } catch {
     return null;
   }
+}
+
+export interface ProgressSuggestionResponse {
+  result: ProgressSuggestionResult;
+  source: 'api' | 'local';
+}
+
+/** 加载活动进度建议与证据缺口；API 不可用时用本地合成证据计算。 */
+export async function loadProgressSuggestions(
+  data: DashboardPayload,
+): Promise<ProgressSuggestionResponse> {
+  try {
+    const response = await fetch('/api/progress/suggestions');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return {
+      result: (await response.json()) as ProgressSuggestionResult,
+      source: 'api',
+    };
+  } catch {
+    const model = data.bim;
+    const capture = buildRealityCapture(model, data.activities);
+    const result = suggestProgressFromEvidence(
+      dashboardToProject(data),
+      model,
+      evidenceFromRealityCapture(capture.evidence),
+      { source: 'simulated', ignoredElementTypes: ['IfcBuildingElementProxy'] },
+    );
+    return { result, source: 'local' };
+  }
+}
+
+export interface CommitProgressResult {
+  mode: 'preview' | 'commit';
+  applied: string[];
+  skipped: string[];
+  totals: ProgressSuggestionResult['totals'];
+  dashboard: DashboardPayload;
+}
+
+/** 预览或提交选中的进度建议（仅 API 可用）。 */
+export async function commitProgressSuggestions(
+  mode: 'preview' | 'commit',
+  activityIds: string[],
+): Promise<CommitProgressResult> {
+  const response = await fetch('/api/progress/commit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode, activityIds }),
+  });
+  if (!response.ok) throw await responseError(response);
+  return (await response.json()) as CommitProgressResult;
 }

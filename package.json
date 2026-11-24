@@ -14,7 +14,8 @@
     "build": "npm --workspace @apcc/web run build",
     "typecheck": "npm --workspace @apcc/core run typecheck && npm --workspace @apcc/api run typecheck && npm --workspace @apcc/web run typecheck",
     "test": "npm --workspace @apcc/core run test && npm --workspace @apcc/api run test",
-    "start:api": "npm --workspace @apcc/api run start"
+    "start:api": "npm --workspace @apcc/api run start",
+    "optimizer": "python -m uvicorn app:app --app-dir services/optimizer --host 127.0.0.1 --port 8010"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

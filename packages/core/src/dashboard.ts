@@ -58,6 +58,7 @@ export function computeDashboard(project: Project): DashboardPayload {
       startDate: project.startDate,
       dataDate: project.dataDate,
       baselineVersion: project.baselineVersion,
+      workweek: project.workweek,
     },
     schedule,
     evm: snapshot,

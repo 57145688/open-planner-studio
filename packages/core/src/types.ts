@@ -60,6 +60,10 @@ export interface Activity {
   status: ActivityStatus;
   ifcGuids: string[];
   isMilestone: boolean;
+  /** 资源平衡写入的最早开始约束（工作日偏移，0 表示项目开始日）。 */
+  notEarlierThan?: number;
+  /** 赶工单价（元/工作日），缺省时按活动预算与工期推算。 */
+  crashCostPerDay?: number;
 }
 
 export interface Risk {
@@ -215,6 +219,8 @@ export interface DashboardPayload {
     startDate: string;
     dataDate: string;
     baselineVersion: string;
+    /** 0 = Sunday ... 6 = Saturday; working weekdays */
+    workweek: number[];
   };
   schedule: ScheduleResult;
   evm: EvmSnapshot;

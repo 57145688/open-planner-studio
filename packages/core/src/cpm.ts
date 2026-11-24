@@ -70,7 +70,7 @@ export function computeSchedule(project: Project): ScheduleResult {
   for (const id of order) {
     const activity = byId.get(id)!;
     const duration = durationOf(activity);
-    let start = 0;
+    let start = Math.max(0, activity.notEarlierThan ?? 0);
     for (const rel of activity.predecessors) {
       const pEs = es.get(rel.activityId);
       const pEf = ef.get(rel.activityId);

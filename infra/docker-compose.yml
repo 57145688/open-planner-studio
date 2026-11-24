@@ -7,6 +7,7 @@
 #   docker compose -f infra/docker-compose.yml --profile openproject up -d
 #   docker compose -f infra/docker-compose.yml --profile erpnext up -d
 #   docker compose -f infra/docker-compose.yml --profile webodm up -d
+#   docker compose -f infra/docker-compose.yml --profile optimizer up -d --build
 #
 # 说明：OpenProject / ERPNext / WebODM 的密钥、数据库与卷需要在正式部署前按官方文档补全，
 # 这里的配置只保证服务边界、端口与数据卷清晰，便于后续接入。
@@ -110,6 +111,17 @@ services:
       - "8000:8000"
     volumes:
       - webodmdata:/webodm
+
+  # OR-Tools CP-SAT 求解服务（阶段 4 的资源平衡与工期-成本优化）
+  optimizer:
+    profiles: ["optimizer"]
+    build:
+      context: ../services/optimizer
+    restart: unless-stopped
+    ports:
+      - "8010:8010"
+    environment:
+      PYTHONUNBUFFERED: "1"
 
 volumes:
   pgdata:

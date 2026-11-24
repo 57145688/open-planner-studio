@@ -18,6 +18,8 @@ import {
   simulateScenario,
 } from '@apcc/core';
 import { ProjectStore } from './store';
+import { createAiRouter } from './aiRoutes';
+import { createOptimizerRouter } from './optimizerRoutes';
 
 const app = express();
 app.use(cors());
@@ -26,6 +28,18 @@ app.use(express.json({ limit: '20mb' }));
 
 const store = new ProjectStore(process.env.APCC_DATA_FILE ?? 'data/projects.json');
 let activeProject = store.getActive() ?? sampleProject();
+
+/** 提交候选项目：同时更新内存中的工作项目并写入新版本。 */
+function commitProject(project: typeof activeProject): void {
+  activeProject = project;
+  store.save(project);
+}
+
+app.use('/api/optimize', createOptimizerRouter(() => activeProject, commitProject));
+app.use(
+  '/api/ai',
+  createAiRouter({ getProject: () => activeProject, commitProject }),
+);
 
 /** 真实案例资产目录（仓库内 examples/reality）。 */
 const realityCaseDir = fileURLToPath(new URL('../../../examples/reality/', import.meta.url));

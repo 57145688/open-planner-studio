@@ -10,5 +10,7 @@ export * from './bim';
 export * from './cost';
 export * from './reality';
 export * from './realcase';
+export * from './optimizer';
+export * from './ai';
 export * from './sample';
 export * from './formats/mspdi';

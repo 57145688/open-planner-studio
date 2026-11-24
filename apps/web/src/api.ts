@@ -1,5 +1,21 @@
-import { computeDashboard, importMspdi, sampleProject } from '@apcc/core';
-import type { DashboardPayload } from '@apcc/core';
+import {
+  applyAiProposal,
+  buildLocalProposals,
+  computeDashboard,
+  crashProject,
+  levelResources,
+  optimizeTimeCost,
+  importMspdi,
+  sampleProject,
+} from '@apcc/core';
+import type {
+  AiProposal,
+  CrashOption,
+  CrashResult,
+  DashboardPayload,
+  LevelingResult,
+  Project,
+} from '@apcc/core';
 
 export interface LoadResult {
   data: DashboardPayload;
@@ -166,4 +182,226 @@ export async function deleteProject(id: string): Promise<void> {
     method: 'DELETE',
   });
   if (!response.ok) throw await responseError(response);
+}
+
+/**
+ * 从仪表盘数据还原项目对象，用于 API 不可用时的本地计算回退。
+ * 资源单价与 BOQ 明细不参与优化计算，缺失字段以 0 或空值补齐。
+ */
+export function dashboardToProject(data: DashboardPayload): Project {
+  const wbsIdByName = new Map(data.wbs.map((node) => [node.name, node.id] as const));
+  return {
+    id: data.project.id,
+    name: data.project.name,
+    description: data.project.description,
+    currency: data.project.currency,
+    startDate: data.project.startDate,
+    dataDate: data.project.dataDate,
+    baselineVersion: data.project.baselineVersion,
+    workweek: data.project.workweek ?? [1, 2, 3, 4, 5],
+    activities: data.activities,
+    resources: data.resources.loads.map((load) => ({
+      id: load.resourceId,
+      name: load.name,
+      type: load.type,
+      unit: load.unit,
+      capacityPerDay: load.capacityPerDay,
+      unitCost: 0,
+    })),
+    boq: data.cost.boq.map((item) => ({
+      id: item.id,
+      code: item.code,
+      description: item.description,
+      unit: item.unit,
+      quantity: item.quantity,
+      unitRate: item.unitRate,
+      wbsId: wbsIdByName.get(item.wbsName) ?? '',
+    })),
+    wbs: data.wbs,
+    risks: data.risks,
+  };
+}
+
+export interface OptimizerResult<T> {
+  result: T;
+  source: 'api' | 'local';
+}
+
+/** 资源平衡：优先调用优化网关（含 OR-Tools），失败时本地回退。 */
+export async function runLeveling(
+  data: DashboardPayload,
+  maxShiftDays = 30,
+): Promise<OptimizerResult<LevelingResult>> {
+  try {
+    const response = await fetch('/api/optimize/leveling', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maxShiftDays }),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return { result: (await response.json()) as LevelingResult, source: 'api' };
+  } catch {
+    return {
+      result: levelResources(dashboardToProject(data), { maxShiftDays }),
+      source: 'local',
+    };
+  }
+}
+
+/** 自定义赶工。 */
+export async function runCrash(
+  data: DashboardPayload,
+  targetDays: number,
+  costCapRatio = 0.03,
+): Promise<OptimizerResult<CrashOption>> {
+  try {
+    const response = await fetch('/api/optimize/crash', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetDays, costCapRatio }),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return { result: (await response.json()) as CrashOption, source: 'api' };
+  } catch {
+    return {
+      result: crashProject(dashboardToProject(data), targetDays, {
+        id: 'crash-local',
+        name: `本地赶工 ${targetDays} 天`,
+        costCapRatio,
+      }),
+      source: 'local',
+    };
+  }
+}
+
+/** 三档赶工方案。 */
+export async function runCrashPlan(
+  data: DashboardPayload,
+): Promise<OptimizerResult<CrashResult>> {
+  try {
+    const response = await fetch('/api/optimize/plan');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return { result: (await response.json()) as CrashResult, source: 'api' };
+  } catch {
+    return { result: optimizeTimeCost(dashboardToProject(data)), source: 'local' };
+  }
+}
+
+export interface CommitOptimizerResult {
+  kind: 'leveling' | 'crash';
+  solver: 'local' | 'ortools';
+  dashboard: DashboardPayload;
+  summary: Record<string, number>;
+}
+
+/** 预览确认后把优化结果提交为新版本（仅 API 可用）。 */
+export async function commitOptimizer(
+  kind: 'leveling' | 'crash',
+  params: Record<string, number>,
+): Promise<CommitOptimizerResult> {
+  const response = await fetch('/api/optimize/commit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind, ...params }),
+  });
+  if (!response.ok) throw await responseError(response);
+  return (await response.json()) as CommitOptimizerResult;
+}
+
+export interface AiChatResult {
+  provider: 'local' | 'llm';
+  model: string | null;
+  proposals: AiProposal[];
+  source: 'api' | 'local';
+}
+
+/** AI 网关对话：优先 API（可接大模型），失败时本地规则引擎。 */
+export async function chatWithAi(
+  message: string,
+  data: DashboardPayload,
+): Promise<AiChatResult> {
+  try {
+    const response = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    if (!response.ok) throw await responseError(response);
+    const payload = (await response.json()) as {
+      provider: 'local' | 'llm';
+      model: string | null;
+      proposals: AiProposal[];
+    };
+    return { ...payload, source: 'api' };
+  } catch {
+    const project = dashboardToProject(data);
+    return {
+      provider: 'local',
+      model: null,
+      proposals: buildLocalProposals(message, project),
+      source: 'local',
+    };
+  }
+}
+
+export interface AiApplyResult {
+  mode: 'preview' | 'commit';
+  title: string;
+  dashboard: DashboardPayload;
+  impact: AiProposal['impact'];
+  source: 'api' | 'local';
+}
+
+/** 预览或提交 AI 提案；本地模式只能预览。 */
+export async function applyProposal(
+  proposal: AiProposal,
+  mode: 'preview' | 'commit',
+  data: DashboardPayload,
+): Promise<AiApplyResult> {
+  try {
+    const response = await fetch(
+      `/api/ai/proposals/${encodeURIComponent(proposal.id)}/apply`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+      },
+    );
+    if (!response.ok) throw await responseError(response);
+    const payload = (await response.json()) as {
+      mode: 'preview' | 'commit';
+      title: string;
+      dashboard: DashboardPayload;
+      impact: AiProposal['impact'];
+    };
+    return { ...payload, source: 'api' };
+  } catch (error) {
+    if (mode === 'commit') throw error;
+    const project = dashboardToProject(data);
+    const candidate = applyAiProposal(project, proposal);
+    return {
+      mode: 'preview',
+      title: proposal.title,
+      impact: proposal.impact,
+      dashboard: computeDashboard(candidate),
+      source: 'local',
+    };
+  }
+}
+
+export interface AiStatus {
+  provider: 'local' | 'llm';
+  model: string | null;
+  hint: string;
+}
+
+/** 查询 AI 网关配置状态；不可用时返回本地状态。 */
+export async function loadAiStatus(): Promise<AiStatus | null> {
+  try {
+    const response = await fetch('/api/ai/status');
+    if (!response.ok) return null;
+    return (await response.json()) as AiStatus;
+  } catch {
+    return null;
+  }
 }

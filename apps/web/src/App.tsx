@@ -3,9 +3,11 @@ import type { DashboardPayload } from '@apcc/core';
 import { loadDashboard } from './api';
 import type { ImportResult } from './api';
 import { FloorStack, GanttChart, ResourceHistogram, SCurveChart } from './components/Charts';
+import { AiAssistantPanel } from './components/AiAssistantPanel';
 import { BimViewer } from './components/BimViewer';
 import { CostPanel } from './components/CostPanel';
 import { DataPanel } from './components/DataPanel';
+import { OptimizerPanel } from './components/OptimizerPanel';
 import { RealCasePanel } from './components/RealCasePanel';
 import { RealityPanel } from './components/RealityPanel';
 import {
@@ -38,6 +40,11 @@ export default function App() {
   function handleImported(result: ImportResult) {
     setData(result.data);
     setSource(result.source);
+  }
+
+  function handleCommitted(next: DashboardPayload) {
+    setData(next);
+    setSource('api');
   }
 
   if (!data) {
@@ -107,6 +114,10 @@ export default function App() {
         </section>
 
         <CostPanel cost={data.cost} />
+
+        <OptimizerPanel data={data} onCommitted={handleCommitted} />
+
+        <AiAssistantPanel data={data} onApplied={handleCommitted} />
 
         <RealCasePanel />
 
@@ -187,13 +198,21 @@ export default function App() {
                 1:N 绑定，用于验证回放链路。
               </li>
               <li>任何 AI 建议都不会直接改写基准；写回采用预览 → 审批 → 提交三级流程。</li>
+              <li>
+                优化求解优先调用 OR-Tools CP-SAT 服务（npm run optimizer 或 compose profile
+                optimizer），未连接时回退本地确定性求解器；结果为候选方案，提交后写入新版本。
+              </li>
+              <li>
+                AI 网关未配置模型时使用本地规则引擎；模型输出仅接受赶工、资源平衡与说明性意图，
+                影响量由确定性求解器复算。
+              </li>
             </ul>
           </section>
         </div>
 
         <footer className="foot">
-          阶段 5 前置 实景核验 · 阶段 3 5D 成本 · 阶段 2 4D 构件回放 · 目标方案 B（Open Planner
-          Studio + IfcOpenShell + ERPNext + OpenProject + OR-Tools + WebODM）
+          阶段 4 AI 网关与 OR-Tools 优化 · 阶段 3 5D 成本 · 阶段 2 4D 构件回放 · 目标方案 B（Open
+          Planner Studio + IfcOpenShell + ERPNext + OpenProject + OR-Tools + WebODM）
         </footer>
       </main>
     </div>

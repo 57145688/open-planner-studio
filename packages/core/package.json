@@ -10,7 +10,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "tsx --test tests/calendar.test.ts tests/cpm.test.ts tests/evm.test.ts tests/formats.test.ts tests/bim.test.ts tests/cost.test.ts tests/reality.test.ts tests/realcase.test.ts"
+    "test": "tsx --test tests/calendar.test.ts tests/cpm.test.ts tests/evm.test.ts tests/formats.test.ts tests/bim.test.ts tests/cost.test.ts tests/reality.test.ts tests/realcase.test.ts tests/optimizer.test.ts tests/ai.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

@@ -1,8 +1,12 @@
 import cors from 'cors';
 import express from 'express';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   SCENARIOS,
   buildBimModel,
+  buildRealityCapture,
   computeCostBreakdown,
   computeDashboard,
   computeEvm,
@@ -22,6 +26,31 @@ app.use(express.json({ limit: '20mb' }));
 
 const store = new ProjectStore(process.env.APCC_DATA_FILE ?? 'data/projects.json');
 let activeProject = store.getActive() ?? sampleProject();
+
+/** 真实案例资产目录（仓库内 examples/reality）。 */
+const realityCaseDir = fileURLToPath(new URL('../../../examples/reality/', import.meta.url));
+
+function sendRealityAsset(
+  res: express.Response,
+  fileName: string,
+  contentType: string,
+  downloadName: string,
+): void {
+  res.sendFile(
+    resolve(realityCaseDir, fileName),
+    {
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `inline; filename="${downloadName}"`,
+      },
+    },
+    (error) => {
+      if (error && !res.headersSent) {
+        res.status(404).json({ error: `真实案例文件不存在：${fileName}` });
+      }
+    },
+  );
+}
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'apcc-api', version: '0.1.0' });
@@ -124,6 +153,39 @@ app.post('/api/scenarios/:id/simulate', (req, res) => {
   } catch (error) {
     res.status(404).json({ error: (error as Error).message });
   }
+});
+
+/** 模拟实景核验：合成点云 + 覆盖率与偏差摘要（非无人机采集）。 */
+app.get('/api/reality', (_req, res) => {
+  const model = buildBimModel(activeProject);
+  res.json(buildRealityCapture(model, activeProject.activities));
+});
+
+/** 真实案例元数据：数据来源、许可、实测期与文件入口。 */
+app.get('/api/reality/case', (_req, res) => {
+  try {
+    const raw = readFileSync(resolve(realityCaseDir, 'case.json'), 'utf8');
+    res.type('application/json').send(raw);
+  } catch {
+    res.status(404).json({
+      error: '真实案例未准备，请先运行 npx tsx scripts/prepare-reality-case.ts。',
+    });
+  }
+});
+
+/** 真实案例降采样点云（binary PLY）。 */
+app.get('/api/reality/case/scan.ply', (_req, res) => {
+  sendRealityAsset(res, 'Sample.scan.ply', 'application/octet-stream', 'Sample.scan.ply');
+});
+
+/** 3DGS 格式验证样本（由实测点云转换，非训练产物）。 */
+app.get('/api/reality/case/scan.3dgs.ply', (_req, res) => {
+  sendRealityAsset(res, 'Sample.3dgs.ply', 'application/octet-stream', 'Sample.3dgs.ply');
+});
+
+/** 真实案例 IFC2X3 设计模型。 */
+app.get('/api/reality/case/model.ifc', (_req, res) => {
+  sendRealityAsset(res, 'Sample.ifc', 'application/x-step; charset=utf-8', 'Sample.ifc');
 });
 
 /** 5D 成本执行：WBS 成本、BOQ 分摊与 EVM 完工预测。 */

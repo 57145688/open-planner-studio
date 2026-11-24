@@ -69,6 +69,67 @@ export async function importProjectXml(xml: string): Promise<ImportResult> {
   }
 }
 
+export interface RealityCaseEpochMeta {
+  id: string;
+  label: string;
+  date: string;
+  kind: string;
+  capture: string;
+  sourcePoints: number;
+  points: number;
+  bounds?: { min: [number, number, number]; max: [number, number, number] };
+}
+
+export interface RealityCaseMeta {
+  id: string;
+  title: string;
+  subtitle: string;
+  dataKind: string;
+  defaultTolerance: number;
+  source: {
+    repository: string;
+    url: string;
+    license: string;
+    citation: string;
+    doi: string;
+    originalFiles: string[];
+  };
+  processing: {
+    tool: string;
+    method: string;
+    sourcePoints: number;
+    points: number;
+    outputBytes: number;
+    format: string;
+    gaussianSplatColors: boolean;
+  };
+  epochs: RealityCaseEpochMeta[];
+  files: { scan: string; model: string; verify3dgs?: string };
+  verification?: {
+    label: string;
+    file: string;
+    points: number;
+    bytes: number;
+    method: string;
+    caveat: string;
+  };
+  boundary: string;
+}
+
+/** 真实案例元数据；仅在 API 可用时返回。 */
+export async function loadRealityCase(): Promise<RealityCaseMeta> {
+  const response = await fetch('/api/reality/case');
+  if (!response.ok) throw await responseError(response);
+  return (await response.json()) as RealityCaseMeta;
+}
+
+/** 拉取案例资产（PLY / IFC）为二进制。 */
+export async function fetchRealityAsset(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url);
+  if (!response.ok) throw await responseError(response);
+  return response.arrayBuffer();
+}
+
 /** 已保存项目列表，仅 API 可用；失败时抛出，由界面提示。 */
 export async function listProjects(): Promise<StoredProjectSummary[]> {
   const response = await fetch('/api/projects');

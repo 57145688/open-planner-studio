@@ -6,6 +6,8 @@ import { FloorStack, GanttChart, ResourceHistogram, SCurveChart } from './compon
 import { BimViewer } from './components/BimViewer';
 import { CostPanel } from './components/CostPanel';
 import { DataPanel } from './components/DataPanel';
+import { RealCasePanel } from './components/RealCasePanel';
+import { RealityPanel } from './components/RealityPanel';
 import {
   Header,
   InsightsPanel,
@@ -106,6 +108,15 @@ export default function App() {
 
         <CostPanel cost={data.cost} />
 
+        <RealCasePanel />
+
+        <RealityPanel
+          model={data.bim}
+          activities={data.activities}
+          summary={data.reality}
+          dataDate={data.project.dataDate}
+        />
+
         <div className="grid-three">
           <section className="panel">
             <div className="panel-head">
@@ -151,7 +162,7 @@ export default function App() {
           <section className="panel">
             <div className="panel-head">
               <h3>数据一致性说明</h3>
-              <span className="panel-count">阶段 3</span>
+              <span className="panel-count">阶段 3–5</span>
             </div>
             <ul className="note-list">
               <li>计划数据、实际成本与进度均为模拟数据，用于验证算法与界面。</li>
@@ -160,6 +171,16 @@ export default function App() {
               <li>
                 BOQ 金额按 WBS 内活动预算比例分摊，EAC 为三种外推方法并列结果，尚未接入采招与
                 实际成本单据。
+              </li>
+              <li>
+                真实案例面板使用 CyberbuildLab 公开样例（Apache-2.0）的 LiDAR 点云与
+                IFC2X3 模型，并附一个由该点云转换的 3DGS 格式验证样本（非训练产物）；
+                覆盖率为模型表面被点云证据覆盖的比例，受扫描视角遮挡影响，不等同于合同
+                进度，也不作为 3DGS 重建精度结论。
+              </li>
+              <li>
+                实景核验使用 BIM 表面合成的点云并注入缺失、偏移与堆场点，仅用于验证核验流程，
+                不代表真实无人机或激光扫描精度。
               </li>
               <li>
                 4D 模型为程序化生成的 IFC4 演示模型（结构、砌体、门窗、屋面、机电），构件与活动
@@ -171,8 +192,8 @@ export default function App() {
         </div>
 
         <footer className="foot">
-          阶段 3 5D 成本 / EVM 预测 · 阶段 2 4D 构件回放 · 目标方案 B（Open Planner Studio +
-          IfcOpenShell + ERPNext + OpenProject + OR-Tools + WebODM）
+          阶段 5 前置 实景核验 · 阶段 3 5D 成本 · 阶段 2 4D 构件回放 · 目标方案 B（Open Planner
+          Studio + IfcOpenShell + ERPNext + OpenProject + OR-Tools + WebODM）
         </footer>
       </main>
     </div>

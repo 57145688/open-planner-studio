@@ -1,0 +1,64 @@
+{
+  "id": "pcd-bim-sample",
+  "title": "真实扫描点云 vs IFC 设计模型",
+  "subtitle": "Apache-2.0 学术样例：单层空间，7 段墙、2 块吊顶、2 樘门",
+  "dataKind": "lidar-point-cloud + 3dgs-format",
+  "defaultTolerance": 0.1,
+  "source": {
+    "repository": "CyberbuildLab/pcd-bim-matching-confidence",
+    "url": "https://github.com/CyberbuildLab/pcd-bim-matching-confidence",
+    "license": "Apache-2.0",
+    "citation": "Ersoz, A. B. & Bosché, F. Evaluating confidence in geometric matching between 3D point clouds and BIM models. Automation in Construction 181 (2026) 106636.",
+    "doi": "https://doi.org/10.1016/j.autcon.2025.106636",
+    "originalFiles": [
+      "input/Sample.ply：23,826,107 字节，1,588,386 点，CloudCompare 2025-01-05 导出",
+      "input/Sample.ifc：IFC2X3，48,125 字节，11 个可解析网格"
+    ]
+  },
+  "processing": {
+    "tool": "scripts/prepare-reality-case.ts",
+    "method": "体素降采样 0.04 m，坐标与颜色取体素均值",
+    "sourcePoints": 1588386,
+    "points": 328299,
+    "outputBytes": 4924824,
+    "format": "binary_little_endian",
+    "gaussianSplatColors": false
+  },
+  "epochs": [
+    {
+      "id": "2025-01-05",
+      "label": "2025-01-05 实测扫描",
+      "date": "2025-01-05",
+      "kind": "lidar",
+      "capture": "上游样例，CloudCompare v2.13.2 导出的配准后点云；采集设备与精度未在上游文档说明",
+      "sourcePoints": 1588386,
+      "points": 328299,
+      "bounds": {
+        "min": [
+          -6.964514255523682,
+          -1.1072673797607422,
+          -0.7209998965263367
+        ],
+        "max": [
+          4.5495991706848145,
+          9.17608642578125,
+          2.5289998054504395
+        ]
+      }
+    }
+  ],
+  "files": {
+    "scan": "/api/reality/case/scan.ply",
+    "model": "/api/reality/case/model.ifc",
+    "verify3dgs": "/api/reality/case/scan.3dgs.ply"
+  },
+  "verification": {
+    "label": "3DGS 格式验证样本",
+    "file": "Sample.3dgs.ply",
+    "points": 65867,
+    "bytes": 3689098,
+    "method": "由实测 LiDAR 点云按 0.09 m 体素降采样，颜色转换为 3DGS 的 f_dc_* 球谐直流项，并补齐 opacity / scale / rot 属性。",
+    "caveat": "该文件不是训练得到的高斯，仅用于验证 3DGS 格式解析、对比与界面链路；其覆盖率受点密度影响，不能作为 3DGS 重建精度结论。"
+  },
+  "boundary": "主案例是实测 LiDAR 点云与 IFC 设计模型的几何对比，不是 3DGS 训练重建结果。仓库附带一个由实测点云转换的 3DGS 格式验证样本，并在界面中单独标注；真实 3DGS 训练导出的 .ply 可通过同一入口作为新一期数据上传。"
+}

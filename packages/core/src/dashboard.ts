@@ -4,6 +4,7 @@ import { computeSchedule } from './cpm';
 import { computeEvm } from './evm';
 import { buildInsights } from './insights';
 import { computeResources } from './resources';
+import { summarizeReality } from './reality';
 import { simulateAllScenarios } from './scenarios';
 import type { DashboardPayload, FloorStatus, Project } from './types';
 
@@ -32,6 +33,16 @@ export function computeDashboard(project: Project): DashboardPayload {
   const insights = buildInsights(project, schedule, snapshot, resources);
   const bim = buildBimModel(project);
   const cost = computeCostBreakdown(project, schedule, snapshot);
+  const reality = summarizeReality(bim, project.activities);
+  if (reality.missingElements > 0 || reality.overThreshold > 0) {
+    insights.unshift({
+      id: 'reality-check',
+      level: 'warning',
+      title: `实景核验：发现 ${reality.missingElements} 个构件缺失`,
+      detail: `模拟点云覆盖 ${(reality.coverage * 100).toFixed(1)}%，平均偏差 ${(reality.meanDeviation * 1000).toFixed(0)} mm，最大 ${(reality.maxDeviation * 1000).toFixed(0)} mm，${reality.overThreshold} 个点超出 ${(reality.tolerance * 1000).toFixed(0)} mm 容差。`,
+      action: '在「模拟实景核验」面板查看缺失与偏移构件，确认后生成整改任务。',
+    });
+  }
   const activities = project.activities.map((activity) => ({
     ...activity,
     ifcGuids: bim.activityGuids[activity.id] ?? activity.ifcGuids,
@@ -60,5 +71,6 @@ export function computeDashboard(project: Project): DashboardPayload {
     activities,
     bim,
     cost,
+    reality,
   };
 }

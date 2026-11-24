@@ -1,5 +1,6 @@
 import type { BimModel } from './bim';
 import type { CostBreakdown } from './cost';
+import type { RealitySummary } from './reality';
 
 export type ActivityStatus = 'planned' | 'inProgress' | 'done';
 export type RelationType = 'FS' | 'SS' | 'FF' | 'SF';
@@ -227,4 +228,5 @@ export interface DashboardPayload {
   activities: Activity[];
   bim: BimModel;
   cost: CostBreakdown;
+  reality: RealitySummary;
 }

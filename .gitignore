@@ -9,3 +9,5 @@ data/
 data/uploads/
 vendor/
 .trae-html-share-packages/
+__pycache__/
+*.pyc

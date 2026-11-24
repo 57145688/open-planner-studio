@@ -13,7 +13,7 @@
     "dev:api": "npm --workspace @apcc/api run dev",
     "build": "npm --workspace @apcc/web run build",
     "typecheck": "npm --workspace @apcc/core run typecheck && npm --workspace @apcc/api run typecheck && npm --workspace @apcc/web run typecheck",
-    "test": "npm --workspace @apcc/core run test",
+    "test": "npm --workspace @apcc/core run test && npm --workspace @apcc/api run test",
     "start:api": "npm --workspace @apcc/api run start"
   },
   "devDependencies": {

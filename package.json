@@ -1,0 +1,23 @@
+{
+  "name": "apcc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Project Control Center - open-source 4D/5D construction project management (open P6 alternative)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:web": "npm --workspace @apcc/web run dev",
+    "dev:api": "npm --workspace @apcc/api run dev",
+    "build": "npm --workspace @apcc/web run build",
+    "typecheck": "npm --workspace @apcc/core run typecheck && npm --workspace @apcc/api run typecheck && npm --workspace @apcc/web run typecheck",
+    "test": "npm --workspace @apcc/core run test",
+    "start:api": "npm --workspace @apcc/api run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}

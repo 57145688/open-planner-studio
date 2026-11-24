@@ -1,0 +1,23 @@
+{
+  "name": "@apcc/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "tsx --test tests/calendar.test.ts tests/cpm.test.ts tests/evm.test.ts tests/formats.test.ts tests/bim.test.ts tests/cost.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.7"
+  }
+}

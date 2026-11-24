@@ -1,0 +1,120 @@
+# 目标方案 B 的基础设施编排入口（阶段 1：只提供部署入口，不要求本机全部拉起）
+#
+# 默认启动平台底座（PostgreSQL + MinIO）：
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# 按需叠加开源系统：
+#   docker compose -f infra/docker-compose.yml --profile openproject up -d
+#   docker compose -f infra/docker-compose.yml --profile erpnext up -d
+#   docker compose -f infra/docker-compose.yml --profile webodm up -d
+#
+# 说明：OpenProject / ERPNext / WebODM 的密钥、数据库与卷需要在正式部署前按官方文档补全，
+# 这里的配置只保证服务边界、端口与数据卷清晰，便于后续接入。
+
+name: apcc
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: apcc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apcc_dev}
+      POSTGRES_DB: apcc
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apcc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-apcc}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-apcc_dev_secret}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # 进度与工作流协同（替代 P6 的 EPPM 部分）
+  openproject:
+    profiles: ["openproject"]
+    image: openproject/openproject:15
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      OPENPROJECT_HOST__NAME: ${OPENPROJECT_HOST:-localhost:8080}
+      OPENPROJECT_HTTPS: "false"
+      OPENPROJECT_SECRET_KEY_BASE: ${OPENPROJECT_SECRET_KEY_BASE:-change-me-in-production}
+      DATABASE_URL: postgres://apcc:${POSTGRES_PASSWORD:-apcc_dev}@postgres:5432/openproject
+    ports:
+      - "8080:80"
+    volumes:
+      - openprojectdata:/var/openproject/assets
+
+  # 成本、采购与合同（5D 后端）
+  erpnext-mariadb:
+    profiles: ["erpnext"]
+    image: mariadb:10.6
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-apcc_dev}
+    volumes:
+      - erpnextdb:/var/lib/mysql
+
+  erpnext-redis:
+    profiles: ["erpnext"]
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  erpnext:
+    profiles: ["erpnext"]
+    image: frappe/erpnext:v15
+    restart: unless-stopped
+    depends_on:
+      - erpnext-mariadb
+      - erpnext-redis
+    environment:
+      DB_HOST: erpnext-mariadb
+      DB_PORT: "3306"
+      DB_ROOT_USER: root
+      DB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-apcc_dev}
+      REDIS_CACHE: erpnext-redis:6379
+      SITE_NAME: ${ERPNEXT_SITE:-apcc.localhost}
+    ports:
+      - "8081:8080"
+    volumes:
+      - erpnextsites:/home/frappe/frappe-bench/sites
+
+  # 现场实景三维重建（阶段 5 的进度核验数据源）
+  webodm:
+    profiles: ["webodm"]
+    image: opendronemap/webodm:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - webodmdata:/webodm
+
+volumes:
+  pgdata:
+  miniodata:
+  openprojectdata:
+  erpnextdb:
+  erpnextsites:
+  webodmdata:

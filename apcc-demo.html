@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>APCC 项目控制台 · 离线演示</title>
+<style>
+:root{--bg:#eef2f7;--panel:#fff;--ink:#0f172a;--soft:#334155;--muted:#64748b;--line:#e2e8f0;--brand:#0d9488;--deep:#0f766e;--blue:#2563eb;--amber:#d97706;--red:#dc2626;--green:#059669;--radius:14px;--shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 "PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1360px;margin:0 auto;padding:26px 22px 44px}
+.hero{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-bottom:16px}
+.brand{display:flex;gap:12px;align-items:center}
+.mark{width:44px;height:44px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
+h1{font-size:21px;margin:0}
+.sub{color:var(--muted);font-size:12px;margin:3px 0 0}
+.meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);align-items:center}
+.chip{padding:3px 9px;border-radius:999px;border:1px solid #cbd5e1;background:#fff}
+.chip.teal{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-top:3px solid var(--blue);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:3px}
+.kpi.good{border-top-color:var(--green)}.kpi.warn{border-top-color:var(--amber)}.kpi.bad{border-top-color:var(--red)}
+.kpi-label{font-size:11.5px;color:var(--muted)}
+.kpi-value{font-size:22px;letter-spacing:.2px;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:11px;color:var(--soft)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px;margin-bottom:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;box-shadow:var(--shadow);min-width:0}
+.card h3{font-size:14px;margin:0 0 10px;display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-weight:650}
+.card h3 small{font-size:11px;color:var(--muted);font-weight:400}
+.chart{width:100%;height:auto;display:block}
+.grid{stroke:#eef2f7;stroke-width:1}
+.axis{fill:#94a3b8;font-size:10px}
+.datadate{stroke:#f59e0b;stroke-width:1.2;stroke-dasharray:4 4}
+.datadate-label{fill:#b45309;font-size:9.5px}
+.series-pv{fill:none;stroke:#94a3b8;stroke-width:2;stroke-dasharray:5 4}
+.series-ev{fill:none;stroke:var(--brand);stroke-width:2.4}
+.series-ac{fill:none;stroke:#e11d48;stroke-width:2.2}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--soft);margin-top:8px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.legend .pv{background:#94a3b8}.legend .ev{background:var(--brand)}.legend .ac{background:#e11d48}
+.floors{display:flex;flex-direction:column;gap:6px}
+.floor{display:grid;grid-template-columns:34px 1fr 38px;gap:8px;align-items:center;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}
+.floor-label{font-size:11.5px;font-weight:600;color:var(--soft)}
+.floor-track{height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+.floor-track i{display:block;height:100%;border-radius:999px;background:#94a3b8}
+.floor-done .floor-track i{background:var(--brand)}
+.floor-active{border-color:#fcd34d;background:#fffbeb}
+.floor-active .floor-track i{background:var(--amber)}
+.floor-pct{font-size:11px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.gantt-card{padding-bottom:8px}
+.gantt-svg{width:100%;height:auto;display:block}
+.gantt-svg .row-code{fill:#94a3b8;font-size:9.5px}
+.gantt-svg .row-name{fill:#334155;font-size:10.5px}
+.gantt-svg .bar{fill:#93b4f7}
+.gantt-svg .bar.critical{fill:#fca5a5}
+.gantt-svg .bar.near{fill:#fcd34d}
+.gantt-svg .bar-done{fill:var(--blue)}
+.gantt-svg .bar.critical+.bar-done{fill:var(--red)}
+.gantt-svg .milestone{fill:#0f172a}
+.gantt-svg .links path{fill:none;stroke:var(--red);stroke-width:1.1;stroke-opacity:.72}
+.res-meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+.res-meta b{color:var(--soft);font-size:15px}
+.hist-bar{fill:url(#hg)}
+.risk-list,.insight-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:11.5px}
+.risk{border-left:3px solid #94a3b8;padding:4px 0 4px 9px}
+.risk-high{border-left-color:var(--red)}.risk-medium{border-left-color:var(--amber)}
+.risk-head{display:flex;gap:8px;align-items:center;font-size:12px}
+.risk p{margin:2px 0 0;color:var(--soft)}
+.risk .muted{color:var(--muted)}
+.sev{font-size:10px;padding:0 6px;border-radius:4px;font-weight:600}
+.sev-high{background:#fee2e2;color:#b91c1c}.sev-medium{background:#fef3c7;color:#b45309}.sev-low{background:#f1f5f9;color:#475569}
+.insight{border-left:3px solid var(--blue);background:#f8fafc;border-radius:8px;padding:8px 10px}
+.insight-warning{border-left-color:var(--amber);background:#fffbf2}
+.insight-critical{border-left-color:var(--red);background:#fef7f7}
+.insight b{font-size:12px}.insight p{margin:2px 0 0;color:var(--soft)}
+.insight .action{color:var(--deep)}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.best{background:#f0fdfa}
+.good{color:var(--green);font-weight:600}.bad{color:var(--red);font-weight:600}
+.muted{color:var(--muted)}.small{font-size:10.5px}
+.bim{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px}
+.bim-stage{position:relative;border:1px solid var(--line);border-radius:11px;background:radial-gradient(120% 120% at 18% 8%,#f8fbff,#e6eef7 58%,#dbe6f2);overflow:hidden}
+.bim-svg{display:block;width:100%;height:auto;max-height:620px}
+.bim-svg poly{stroke:rgba(15,23,42,.16);stroke-width:.5;cursor:pointer;transition:fill .12s}
+.bim-svg poly.sel{stroke:#1d4ed8;stroke-width:1.8}
+.bim-side{display:flex;flex-direction:column;gap:9px}
+.bim-date{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+.bim-date strong{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
+.bim-range{width:100%;accent-color:var(--brand);cursor:pointer}
+.btns{display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:#f8fafc;color:var(--soft);font:600 12px inherit;padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.bim-levels{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:9px;background:#f8fafc;padding:8px 9px}
+.lvl{display:grid;grid-template-columns:26px 1fr 44px;gap:7px;align-items:center}
+.lvl span{font-size:10.5px;color:var(--soft);font-weight:600}
+.lvl .track{display:flex;height:9px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+.lvl .track i{display:block;height:100%}
+.lvl .done{background:#0f9d76}.lvl .active{background:#e08a1e}
+.lvl b{font-size:10px;color:var(--muted);text-align:right;font-weight:500}
+.bim-info{flex:1;border:1px dashed #cbd5e1;border-radius:9px;background:#fbfdff;padding:9px 10px;font-size:11.5px;color:var(--muted);min-height:92px}
+.bim-info b{color:var(--ink);font-size:12px}
+.bim-info p{margin:4px 0 0;line-height:1.5}
+.bim-legend{display:flex;gap:12px;font-size:10.5px;color:var(--soft);flex-wrap:wrap}
+.bim-legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
+.foot{text-align:center;font-size:11px;color:#94a3b8;margin-top:18px}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}.grid2,.grid3,.bim{grid-template-columns:1fr}}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.wrap{padding:18px 14px 30px}.bim-svg{max-height:420px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="brand">
+      <div class="mark">AP</div>
+      <div>
+        <h1>六层办公楼样板工程</h1>
+        <p class="sub">钢筋混凝土框架结构办公楼，用于验证 BIM—进度—成本—EVM—现场核验的完整数据闭环。全部数据为演示用模拟数据。</p>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="chip teal">离线演示快照</span>
+      <span class="chip">数据日期 2026-06-15</span>
+      <span class="chip">开工 2026-03-02</span>
+      <span class="chip">基准 BL-2026-03-02</span>
+    </div>
+  </header>
+
+  <section class="kpis"><div class="kpi kpi-good">
+      <span class="kpi-label">总体完成率</span>
+      <strong class="kpi-value">55%</strong>
+      <span class="kpi-sub">计划 66%</span>
+    </div><div class="kpi kpi-bad">
+      <span class="kpi-label">进度绩效 SPI</span>
+      <strong class="kpi-value">0.837</strong>
+      <span class="kpi-sub">落后 52.8 万</span>
+    </div><div class="kpi kpi-bad">
+      <span class="kpi-label">成本绩效 CPI</span>
+      <strong class="kpi-value">0.944</strong>
+      <span class="kpi-sub">超支 16.0 万</span>
+    </div><div class="kpi kpi-neutral">
+      <span class="kpi-label">合同预算 BAC</span>
+      <strong class="kpi-value">¥494 万</strong>
+      <span class="kpi-sub">EAC ¥523.1 万</span>
+    </div><div class="kpi kpi-neutral">
+      <span class="kpi-label">剩余工作 ETC</span>
+      <strong class="kpi-value">¥235.7 万</strong>
+      <span class="kpi-sub">VAC ¥-29.1 万</span>
+    </div><div class="kpi kpi-neutral">
+      <span class="kpi-label">关键活动</span>
+      <strong class="kpi-value">22</strong>
+      <span class="kpi-sub">29 项活动 · 工期 105 天</span>
+    </div></section>
+
+  <div class="grid2">
+    <section class="card">
+      <h3>挣值曲线（PV / EV / AC）<small>完成 55% · SPI 0.84 · CPI 0.94</small></h3>
+      <svg viewBox="0 0 680 280" class="chart"><line x1="62" x2="660" y1="246" y2="246" class="grid"/><text x="54" y="250" class="axis" text-anchor="end">0万</text><line x1="62" x2="660" y1="189" y2="189" class="grid"/><text x="54" y="193" class="axis" text-anchor="end">124万</text><line x1="62" x2="660" y1="132" y2="132" class="grid"/><text x="54" y="136" class="axis" text-anchor="end">247万</text><line x1="62" x2="660" y1="75" y2="75" class="grid"/><text x="54" y="79" class="axis" text-anchor="end">371万</text><line x1="62" x2="660" y1="18" y2="18" class="grid"/><text x="54" y="22" class="axis" text-anchor="end">494万</text><line x1="493.25" x2="493.25" y1="18" y2="246" class="datadate"/><text x="497.25" y="28" class="datadate-label">数据日期 2026-06-15</text><path d="M62.0,245.8 L90.8,243.9 L119.5,240.9 L148.3,237.7 L177.0,232.4 L205.8,227.8 L234.5,219.2 L263.3,216.0 L292.0,209.1 L320.8,200.8 L349.5,193.4 L378.3,181.2 L407.0,168.0 L435.8,146.8 L464.5,121.0 L493.3,96.3 L522.0,69.6 L550.8,54.8 L579.5,40.2 L608.3,29.5 L637.0,23.4 L660.0,18.0" class="series-pv"/><path d="M62.0,245.8 L90.8,243.9 L119.5,240.9 L148.3,237.7 L177.0,232.4 L205.8,227.8 L234.5,219.2 L263.3,216.0 L292.0,209.1 L320.8,200.8 L349.5,193.4 L378.3,181.9 L407.0,169.5 L435.8,153.3 L464.5,135.3 L493.3,120.7 L522.0,120.7 L550.8,120.7 L579.5,120.7 L608.3,120.7 L637.0,120.7 L660.0,120.7" class="series-ev"/><path d="M62.0,245.8 L90.8,243.9 L119.5,240.8 L148.3,237.5 L177.0,232.0 L205.8,227.2 L234.5,218.1 L263.3,214.7 L292.0,207.3 L320.8,198.4 L349.5,190.5 L378.3,178.1 L407.0,164.9 L435.8,147.8 L464.5,128.7 L493.3,113.4 L522.0,113.4 L550.8,113.4 L579.5,113.4 L608.3,113.4 L637.0,113.4 L660.0,113.4" class="series-ac"/><text x="62" y="270" class="axis">2026-03-02</text><text x="660" y="270" class="axis" text-anchor="end">2026-07-24</text></svg>
+      <div class="legend"><span><i class="pv"></i>计划值 PV</span><span><i class="ev"></i>挣值 EV</span><span><i class="ac"></i>实际成本 AC</span></div>
+    </section>
+    <section class="card">
+      <h3>楼层进度<small>4/6 层完成</small></h3>
+      <div class="floors"><div class="floor floor-active">
+      <span class="floor-label">6F</span>
+      <div class="floor-track"><i style="width:24%"></i></div>
+      <span class="floor-pct">24%</span>
+    </div><div class="floor floor-active">
+      <span class="floor-label">5F</span>
+      <div class="floor-track"><i style="width:92%"></i></div>
+      <span class="floor-pct">92%</span>
+    </div><div class="floor floor-done">
+      <span class="floor-label">4F</span>
+      <div class="floor-track"><i style="width:100%"></i></div>
+      <span class="floor-pct">100%</span>
+    </div><div class="floor floor-done">
+      <span class="floor-label">3F</span>
+      <div class="floor-track"><i style="width:100%"></i></div>
+      <span class="floor-pct">100%</span>
+    </div><div class="floor floor-done">
+      <span class="floor-label">2F</span>
+      <div class="floor-track"><i style="width:100%"></i></div>
+      <span class="floor-pct">100%</span>
+    </div><div class="floor floor-done">
+      <span class="floor-label">1F</span>
+      <div class="floor-track"><i style="width:100%"></i></div>
+      <span class="floor-pct">100%</span>
+    </div></div>
+      <p class="muted small" style="margin:10px 0 0">进度按主体结构与混凝土活动的预算加权计算。</p>
+    </section>
+  </div>
+
+  <section class="card gantt-card" style="margin-bottom:14px">
+    <h3>进度计划与关键路径<small>29 项活动 · 关键路径 22 项 · 红线为关键路径逻辑关系</small></h3>
+    <svg viewBox="0 0 1180 678" class="gantt-svg"><line x1="270" x2="270" y1="24" y2="672" class="grid"/><text x="274" y="20" class="axis">26/03</text><line x1="456.4761904761905" x2="456.4761904761905" y1="24" y2="672" class="grid"/><text x="460.4761904761905" y="20" class="axis">26/04</text><line x1="642.952380952381" x2="642.952380952381" y1="24" y2="672" class="grid"/><text x="646.952380952381" y="20" class="axis">26/05</text><line x1="820.952380952381" x2="820.952380952381" y1="24" y2="672" class="grid"/><text x="824.952380952381" y="20" class="axis">26/06</text><line x1="1007.4285714285714" x2="1007.4285714285714" y1="24" y2="672" class="grid"/><text x="1011.4285714285714" y="20" class="axis">26/07</text><line x1="905.7142857142858" x2="905.7142857142858" y1="24" y2="672" class="datadate"/><text x="8" y="44.5" class="row-code">1.1</text><text x="64" y="44.5" class="row-name">施工准备与场地平整</text><rect x="270" y="34" width="33.904761904761905" height="14" rx="3" class="bar critical"/><rect x="270" y="34" width="33.9" height="14" rx="3" class="bar-done"/><text x="8" y="66.5" class="row-code">1.2</text><text x="64" y="66.5" class="row-name">土方开挖</text><rect x="303.9047619047619" y="56" width="59.333333333333336" height="14" rx="3" class="bar critical"/><rect x="303.9047619047619" y="56" width="59.3" height="14" rx="3" class="bar-done"/><text x="8" y="88.5" class="row-code">1.3</text><text x="64" y="88.5" class="row-name">垫层与基础防水</text><rect x="363.23809523809524" y="78" width="42.38095238095238" height="14" rx="3" class="bar critical"/><rect x="363.23809523809524" y="78" width="42.4" height="14" rx="3" class="bar-done"/><text x="8" y="110.5" class="row-code">2.1</text><text x="64" y="110.5" class="row-name">基础钢筋绑扎</text><rect x="405.6190476190476" y="100" width="59.333333333333336" height="14" rx="3" class="bar critical"/><rect x="405.6190476190476" y="100" width="59.3" height="14" rx="3" class="bar-done"/><text x="8" y="132.5" class="row-code">2.2</text><text x="64" y="132.5" class="row-name">基础模板安装</text><rect x="464.95238095238096" y="122" width="42.38095238095238" height="14" rx="3" class="bar critical"/><rect x="464.95238095238096" y="122" width="42.4" height="14" rx="3" class="bar-done"/><text x="8" y="154.5" class="row-code">2.3</text><text x="64" y="154.5" class="row-name">基础混凝土浇筑</text><rect x="507.33333333333337" y="144" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="507.33333333333337" y="144" width="25.4" height="14" rx="3" class="bar-done"/><text x="8" y="176.5" class="row-code">2.4</text><text x="64" y="176.5" class="row-name">基础回填</text><rect x="532.7619047619048" y="166" width="33.904761904761905" height="14" rx="3" class="bar critical"/><rect x="532.7619047619048" y="166" width="33.9" height="14" rx="3" class="bar-done"/><text x="8" y="198.5" class="row-code">3.1.1</text><text x="64" y="198.5" class="row-name">1F 柱墙梁板钢筋与模板</text><rect x="566.6666666666666" y="188" width="50.857142857142854" height="14" rx="3" class="bar critical"/><rect x="566.6666666666666" y="188" width="50.9" height="14" rx="3" class="bar-done"/><text x="8" y="220.5" class="row-code">3.1.2</text><text x="64" y="220.5" class="row-name">1F 楼板混凝土浇筑</text><rect x="617.5238095238095" y="210" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="617.5238095238095" y="210" width="25.4" height="14" rx="3" class="bar-done"/><text x="8" y="242.5" class="row-code">3.2.1</text><text x="64" y="242.5" class="row-name">2F 柱墙梁板钢筋与模板</text><rect x="642.952380952381" y="232" width="50.857142857142854" height="14" rx="3" class="bar critical"/><rect x="642.952380952381" y="232" width="50.9" height="14" rx="3" class="bar-done"/><text x="8" y="264.5" class="row-code">3.2.2</text><text x="64" y="264.5" class="row-name">2F 楼板混凝土浇筑</text><rect x="693.8095238095239" y="254" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="693.8095238095239" y="254" width="25.4" height="14" rx="3" class="bar-done"/><text x="8" y="286.5" class="row-code">3.3.1</text><text x="64" y="286.5" class="row-name">3F 柱墙梁板钢筋与模板</text><rect x="719.2380952380952" y="276" width="50.857142857142854" height="14" rx="3" class="bar critical"/><rect x="719.2380952380952" y="276" width="50.9" height="14" rx="3" class="bar-done"/><text x="8" y="308.5" class="row-code">3.3.2</text><text x="64" y="308.5" class="row-name">3F 楼板混凝土浇筑</text><rect x="770.0952380952381" y="298" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="770.0952380952381" y="298" width="25.4" height="14" rx="3" class="bar-done"/><text x="8" y="330.5" class="row-code">3.4.1</text><text x="64" y="330.5" class="row-name">4F 柱墙梁板钢筋与模板</text><rect x="795.5238095238095" y="320" width="50.857142857142854" height="14" rx="3" class="bar critical"/><rect x="795.5238095238095" y="320" width="50.9" height="14" rx="3" class="bar-done"/><text x="8" y="352.5" class="row-code">3.4.2</text><text x="64" y="352.5" class="row-name">4F 楼板混凝土浇筑</text><rect x="846.3809523809524" y="342" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="846.3809523809524" y="342" width="25.4" height="14" rx="3" class="bar-done"/><text x="8" y="374.5" class="row-code">3.5.1</text><text x="64" y="374.5" class="row-name">5F 柱墙梁板钢筋与模板</text><rect x="871.8095238095239" y="364" width="50.857142857142854" height="14" rx="3" class="bar critical"/><rect x="871.8095238095239" y="364" width="50.9" height="14" rx="3" class="bar-done"/><text x="8" y="396.5" class="row-code">3.5.2</text><text x="64" y="396.5" class="row-name">5F 楼板混凝土浇筑</text><rect x="922.6666666666666" y="386" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="922.6666666666666" y="386" width="20.3" height="14" rx="3" class="bar-done"/><text x="8" y="418.5" class="row-code">3.6.1</text><text x="64" y="418.5" class="row-name">6F 柱墙梁板钢筋与模板</text><rect x="948.0952380952381" y="408" width="50.857142857142854" height="14" rx="3" class="bar critical"/><rect x="948.0952380952381" y="408" width="20.3" height="14" rx="3" class="bar-done"/><text x="8" y="440.5" class="row-code">3.6.2</text><text x="64" y="440.5" class="row-name">6F 楼板混凝土浇筑</text><rect x="998.952380952381" y="430" width="25.428571428571427" height="14" rx="3" class="bar critical"/><rect x="998.952380952381" y="430" width="0.0" height="14" rx="3" class="bar-done"/><text x="8" y="462.5" class="row-code">4.1</text><text x="64" y="462.5" class="row-name">砌体工程</text><rect x="795.5238095238095" y="452" width="101.71428571428571" height="14" rx="3" class="bar"/><rect x="795.5238095238095" y="452" width="61.0" height="14" rx="3" class="bar-done"/><text x="8" y="484.5" class="row-code">4.2</text><text x="64" y="484.5" class="row-name">屋面工程</text><rect x="1024.3809523809523" y="474" width="67.80952380952381" height="14" rx="3" class="bar critical"/><rect x="1024.3809523809523" y="474" width="0.0" height="14" rx="3" class="bar-done"/><text x="8" y="506.5" class="row-code">5.1</text><text x="64" y="506.5" class="row-name">机电预留预埋与管道</text><rect x="710.7619047619048" y="496" width="152.57142857142858" height="14" rx="3" class="bar"/><rect x="710.7619047619048" y="496" width="129.7" height="14" rx="3" class="bar-done"/><text x="8" y="528.5" class="row-code">5.2</text><text x="64" y="528.5" class="row-name">电气与暖通安装</text><rect x="795.5238095238095" y="518" width="135.61904761904762" height="14" rx="3" class="bar"/><rect x="795.5238095238095" y="518" width="47.5" height="14" rx="3" class="bar-done"/><text x="8" y="550.5" class="row-code">6.1</text><text x="64" y="550.5" class="row-name">室内抹灰</text><rect x="846.3809523809524" y="540" width="101.71428571428571" height="14" rx="3" class="bar"/><rect x="846.3809523809524" y="540" width="20.3" height="14" rx="3" class="bar-done"/><text x="8" y="572.5" class="row-code">6.2</text><text x="64" y="572.5" class="row-name">门窗安装</text><rect x="880.2857142857143" y="562" width="67.80952380952381" height="14" rx="3" class="bar"/><rect x="880.2857142857143" y="562" width="6.8" height="14" rx="3" class="bar-done"/><text x="8" y="594.5" class="row-code">6.3</text><text x="64" y="594.5" class="row-name">精装修</text><rect x="914.1904761904761" y="584" width="118.66666666666667" height="14" rx="3" class="bar"/><rect x="914.1904761904761" y="584" width="0.0" height="14" rx="3" class="bar-done"/><text x="8" y="616.5" class="row-code">7.1</text><text x="64" y="616.5" class="row-name">室外工程</text><rect x="1066.7619047619048" y="606" width="84.76190476190476" height="14" rx="3" class="bar critical"/><rect x="1066.7619047619048" y="606" width="0.0" height="14" rx="3" class="bar-done"/><text x="8" y="638.5" class="row-code">7.2</text><text x="64" y="638.5" class="row-name">系统调试</text><rect x="1032.8571428571427" y="628" width="50.857142857142854" height="14" rx="3" class="bar"/><rect x="1032.8571428571427" y="628" width="0.0" height="14" rx="3" class="bar-done"/><text x="8" y="660.5" class="row-code">7.3</text><text x="64" y="660.5" class="row-name">竣工验收</text><polygon points="1157.5238095238096,651 1163.5238095238096,657 1157.5238095238096,663 1151.5238095238096,657" class="milestone"/><g class="links"><path d="M 303.9 41 H 310.9 V 63 H 303.9"/><path d="M 363.2 63 H 370.2 V 85 H 363.2"/><path d="M 405.6 85 H 412.6 V 107 H 405.6"/><path d="M 465.0 107 H 472.0 V 129 H 465.0"/><path d="M 507.3 129 H 514.3 V 151 H 507.3"/><path d="M 532.8 151 H 539.8 V 173 H 532.8"/><path d="M 566.7 173 H 573.7 V 195 H 566.7"/><path d="M 617.5 195 H 624.5 V 217 H 617.5"/><path d="M 643.0 217 H 650.0 V 239 H 643.0"/><path d="M 693.8 239 H 700.8 V 261 H 693.8"/><path d="M 719.2 261 H 726.2 V 283 H 719.2"/><path d="M 770.1 283 H 777.1 V 305 H 770.1"/><path d="M 795.5 305 H 802.5 V 327 H 795.5"/><path d="M 846.4 327 H 853.4 V 349 H 846.4"/><path d="M 871.8 349 H 878.8 V 371 H 871.8"/><path d="M 922.7 371 H 929.7 V 393 H 922.7"/><path d="M 948.1 393 H 955.1 V 415 H 948.1"/><path d="M 999.0 415 H 1006.0 V 437 H 999.0"/><path d="M 1024.4 437 H 1031.4 V 481 H 1024.4"/><path d="M 1024.4 481 H 1035.0 V 613 H 1066.8"/><path d="M 1151.5 613 H 1158.5 V 657 H 1151.5"/></g></svg>
+  </section>
+
+  <div class="grid3">
+    <section class="card">
+      <h3>资源投入<small>按周平均</small></h3>
+      <div class="res-meta">人工峰值 <b>80</b> 人/日 · 机械峰值 <b>3</b> 台/日</div>
+      <svg width="0" height="0" aria-hidden="true"><defs><linearGradient id="hg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#0d9488"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs></svg>
+      <svg viewBox="0 0 520 150" class="chart">
+    <rect x="0.0" y="111.9" width="21.9" height="18.1" rx="2" class="hist-bar"/><rect x="24.9" y="114.9" width="21.9" height="15.1" rx="2" class="hist-bar"/><rect x="49.8" y="99.8" width="21.9" height="30.2" rx="2" class="hist-bar"/><rect x="74.7" y="87.0" width="21.9" height="43.0" rx="2" class="hist-bar"/><rect x="99.6" y="87.7" width="21.9" height="42.3" rx="2" class="hist-bar"/><rect x="124.5" y="93.8" width="21.9" height="36.2" rx="2" class="hist-bar"/><rect x="149.4" y="102.1" width="21.9" height="27.9" rx="2" class="hist-bar"/><rect x="174.3" y="73.4" width="21.9" height="56.6" rx="2" class="hist-bar"/><rect x="199.2" y="93.8" width="21.9" height="36.2" rx="2" class="hist-bar"/><rect x="224.1" y="73.4" width="21.9" height="56.6" rx="2" class="hist-bar"/><rect x="249.0" y="81.3" width="21.9" height="48.7" rx="2" class="hist-bar"/><rect x="274.0" y="59.5" width="21.9" height="70.5" rx="2" class="hist-bar"/><rect x="298.9" y="36.8" width="21.9" height="93.2" rx="2" class="hist-bar"/><rect x="323.8" y="8.1" width="21.9" height="121.9" rx="2" class="hist-bar"/><rect x="348.7" y="4.0" width="21.9" height="126.0" rx="2" class="hist-bar"/><rect x="373.6" y="16.1" width="21.9" height="113.9" rx="2" class="hist-bar"/><rect x="398.5" y="43.2" width="21.9" height="86.8" rx="2" class="hist-bar"/><rect x="423.4" y="71.1" width="21.9" height="58.9" rx="2" class="hist-bar"/><rect x="448.3" y="88.5" width="21.9" height="41.5" rx="2" class="hist-bar"/><rect x="473.2" y="99.8" width="21.9" height="30.2" rx="2" class="hist-bar"/><rect x="498.1" y="114.9" width="21.9" height="15.1" rx="2" class="hist-bar"/>
+    <line x1="0" x2="520" y1="130" y2="130" class="grid"/>
+    <text x="0" y="144" class="axis">开工</text>
+    <text x="260" y="144" class="axis" text-anchor="middle">数据日期</text>
+    <text x="520" y="144" class="axis" text-anchor="end">完工</text>
+  </svg>
+      <p class="muted small" style="margin:6px 0 0">超配资源 3 项 · 共 11 项资源</p>
+    </section>
+    <section class="card">
+      <h3>风险与问题<small>6 项</small></h3>
+      <ul class="risk-list"><li class="risk risk-high">
+      <div class="risk-head"><b>主体结构进度落后约 18 天</b><span class="sev sev-high">高</span></div>
+      <p>概率 75% · 影响 18 天 / ¥32 万</p>
+      <p class="muted">对 4F 以上结构增加钢筋工班组，并采用分区流水施工。</p>
+    </li><li class="risk risk-high">
+      <div class="risk-head"><b>塔吊资源在结构与砌体交叉期超配</b><span class="sev sev-high">高</span></div>
+      <p>概率 60% · 影响 6 天 / ¥9 万</p>
+      <p class="muted">错峰安排塔吊，或临时增加 1 台汽车吊承担砌体垂直运输。</p>
+    </li><li class="risk risk-medium">
+      <div class="risk-head"><b>混凝土供应能力不足</b><span class="sev sev-medium">中</span></div>
+      <p>概率 40% · 影响 4 天 / ¥8 万</p>
+      <p class="muted">锁定两家搅拌站，并设置每日供应上限与备用泵车。</p>
+    </li><li class="risk risk-medium">
+      <div class="risk-head"><b>机电预埋与结构穿插冲突</b><span class="sev sev-medium">中</span></div>
+      <p>概率 35% · 影响 6 天 / ¥12 万</p>
+      <p class="muted">提前完成机电深化设计，按楼层移交作业面。</p>
+    </li><li class="risk risk-medium">
+      <div class="risk-head"><b>雨季影响回填与室外工程</b><span class="sev sev-medium">中</span></div>
+      <p>概率 30% · 影响 5 天 / ¥6 万</p>
+      <p class="muted">关注天气窗口，准备排水与覆盖措施。</p>
+    </li><li class="risk risk-low">
+      <div class="risk-head"><b>装修材料价格波动</b><span class="sev sev-low">低</span></div>
+      <p>概率 25% · 影响 0 天 / ¥15 万</p>
+      <p class="muted">对主要材料提前锁价并签订框架采购协议。</p>
+    </li></ul>
+    </section>
+    <section class="card">
+      <h3>智能洞察<small>规则引擎</small></h3>
+      <ul class="insight-list"><li class="insight insight-critical">
+      <b>进度绩效 SPI 0.84，低于计划</b>
+      <p>截止 2026-06-15，已完成工作的预算价值低于计划值 528,500 CNY。</p>
+      <p class="action">建议对关键路径做 3 种赶工情景比较，再提交审批。</p>
+    </li><li class="insight insight-warning">
+      <b>成本绩效 CPI 0.94，已发生超支</b>
+      <p>实际成本高于挣值 159,940 CNY，按当前趋势预测完工成本 5,231,121 CNY。</p>
+      <p class="action">复核低效加班与材料损耗，避免用压缩后续工序掩盖成本问题。</p>
+    </li><li class="insight insight-warning">
+      <b>3 项资源超配</b>
+      <p>机电安装工 峰值 25人/日（容量 24）；装修工 峰值 36人/日（容量 30）；塔吊 峰值 2台/日（容量 1）</p>
+      <p class="action">使用资源平衡预览（dry run）比较错峰与增配方案的工期影响。</p>
+    </li><li class="insight insight-warning">
+      <b>2 项高风险需要现场确认</b>
+      <p>主体结构进度落后约 18 天；塔吊资源在结构与砌体交叉期超配</p>
+      <p class="action">由施工负责人确认工作面约束后，再决定是否写入正式计划。</p>
+    </li></ul>
+    </section>
+  </div>
+
+  <section class="card" style="margin-bottom:14px">
+    <h3>情景对比<small>确定性排程重算</small></h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>情景</th><th class="num">工期</th><th class="num">完工</th><th class="num">工期偏差</th><th class="num">成本偏差</th><th class="num">EAC</th><th class="num">人工峰值</th></tr></thead>
+        <tbody><tr class="best">
+      <td><b>情景 A · 关键路径赶工</b><div class="muted small">对剩余关键路径活动压缩 25% 工期，人工与机械投入上浮 6%。</div></td>
+      <td class="num">99 天</td>
+      <td class="num">2026-07-16</td>
+      <td class="num good">-6 天</td>
+      <td class="num bad">+5.5 万</td>
+      <td class="num">¥528.6 万</td>
+      <td class="num">80 人</td>
+    </tr><tr>
+      <td><b>情景 B · 增加班组</b><div class="muted small">关键活动增派班组，工期压缩 15%，资源投入上浮 4%。</div></td>
+      <td class="num">102 天</td>
+      <td class="num">2026-07-21</td>
+      <td class="num good">-3 天</td>
+      <td class="num bad">+3.7 万</td>
+      <td class="num">¥526.8 万</td>
+      <td class="num">80 人</td>
+    </tr><tr>
+      <td><b>情景 C · 工序穿插</b><div class="muted small">对全部未完成活动优化工序搭接，缩短 10% 工期，几乎不增加成本。</div></td>
+      <td class="num">103 天</td>
+      <td class="num">2026-07-22</td>
+      <td class="num good">-2 天</td>
+      <td class="num ">0.0 万</td>
+      <td class="num">¥523.1 万</td>
+      <td class="num">79 人</td>
+    </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>4D 构件回放（IFC4 演示模型）<small>138 个构件 · 6 层 · 可拖动日期滑杆或播放</small></h3>
+    <div class="bim">
+      <div class="bim-stage">
+        <svg id="bim-svg" class="bim-svg" role="img" aria-label="4D 建筑模型"></svg>
+      </div>
+      <aside class="bim-side">
+        <div class="bim-date"><span>数据日期</span><strong id="bim-date">—</strong><small id="bim-day">—</small></div>
+        <input id="bim-range" class="bim-range" type="range" min="0" max="104" value="75"/>
+        <div class="btns">
+          <button class="btn primary" id="bim-play">播放</button>
+          <button class="btn" id="bim-reset">回到数据日期</button>
+        </div>
+        <div class="bim-levels" id="bim-levels"></div>
+        <div class="bim-info" id="bim-info">点击模型中的构件，查看其关联的进度活动。</div>
+        <div class="bim-legend">
+          <span><i style="background:#0f9d76"></i>已完成</span>
+          <span><i style="background:#e08a1e"></i>进行中</span>
+          <span><i style="background:#c3cedd"></i>未开始</span>
+        </div>
+      </aside>
+    </div>
+    <p class="muted small" style="margin:10px 0 0">模型由项目控制台程序化生成：36 柱 / 12 梁 / 6 板 / 6 承台 / 28 墙 / 24 窗 / 6 门 / 1 屋面 / 19 机电构件。围护与机电以本层结构完成为前置条件。</p>
+  </section>
+
+  <footer class="foot">APCC 项目控制台 · 离线演示快照 · 数据为模拟样例，用于功能展示 · 生成于 2026-11-23</footer>
+</div>
+<script>
+window.__APCC__ = {"elements":[["基础承台 J-11","IfcFooting",1,"A06",2,2,0.4,2,2,-0.2],["基础承台 J-12","IfcFooting",1,"A06",2,2,0.4,2,14,-0.2],["基础承台 J-21","IfcFooting",1,"A06",2,2,0.4,12,2,-0.2],["基础承台 J-22","IfcFooting",1,"A06",2,2,0.4,12,14,-0.2],["基础承台 J-31","IfcFooting",1,"A06",2,2,0.4,22,2,-0.2],["基础承台 J-32","IfcFooting",1,"A06",2,2,0.4,22,14,-0.2],["1F 框架柱 KZ-11","IfcColumn",1,"F1-R",0.6,0.6,3.2,2,2,1.6],["1F 框架柱 KZ-12","IfcColumn",1,"F1-R",0.6,0.6,3.2,2,14,1.6],["1F 框架柱 KZ-21","IfcColumn",1,"F1-R",0.6,0.6,3.2,12,2,1.6],["1F 框架柱 KZ-22","IfcColumn",1,"F1-R",0.6,0.6,3.2,12,14,1.6],["1F 框架柱 KZ-31","IfcColumn",1,"F1-R",0.6,0.6,3.2,22,2,1.6],["1F 框架柱 KZ-32","IfcColumn",1,"F1-R",0.6,0.6,3.2,22,14,1.6],["1F 主梁 KL-1","IfcBeam",1,"F1-R",24,0.4,0.7,12,2,2.65],["1F 主梁 KL-2","IfcBeam",1,"F1-R",24,0.4,0.7,12,14,2.65],["1F 楼板 LB","IfcSlab",1,"F1-C",24,16,0.2,12,8,3.1],["1F 南外墙 Q-1","IfcWall",1,"A20",24,0.2,2.8000000000000003,12,0.1,1.4000000000000001],["1F 北外墙 Q-2","IfcWall",1,"A20",24,0.2,2.8000000000000003,12,15.9,1.4000000000000001],["1F 西外墙 Q-3","IfcWall",1,"A20",0.2,16,2.8000000000000003,0.1,8,1.4000000000000001],["1F 东外墙 Q-4","IfcWall",1,"A20",0.2,16,2.8000000000000003,23.9,8,1.4000000000000001],["1F 南窗 C-1","IfcWindow",1,"A25",2.2,0.3,1.5,6,0.1,1.7],["1F 北窗 C-3","IfcWindow",1,"A25",2.2,0.3,1.5,6,15.9,1.7],["1F 南窗 C-2","IfcWindow",1,"A25",2.2,0.3,1.5,18,0.1,1.7],["1F 北窗 C-4","IfcWindow",1,"A25",2.2,0.3,1.5,18,15.9,1.7],["1F 入口门 M-1","IfcDoor",1,"A25",1.4,0.3,2.2,12,0.1,1.1],["1F 给排水管线 P-1","IfcBuildingElementProxy",1,"A22",22,0.22,0.22,12,4.5,2.6500000000000004],["1F 给排水管线 P-2","IfcBuildingElementProxy",1,"A22",22,0.22,0.22,12,10.5,2.6500000000000004],["1F 通风管道 D-1","IfcBuildingElementProxy",1,"A23",22,0.5,0.4,12,7.5,2.25],["2F 框架柱 KZ-11","IfcColumn",2,"F2-R",0.6,0.6,3.2,2,2,4.800000000000001],["2F 框架柱 KZ-12","IfcColumn",2,"F2-R",0.6,0.6,3.2,2,14,4.800000000000001],["2F 框架柱 KZ-21","IfcColumn",2,"F2-R",0.6,0.6,3.2,12,2,4.800000000000001],["2F 框架柱 KZ-22","IfcColumn",2,"F2-R",0.6,0.6,3.2,12,14,4.800000000000001],["2F 框架柱 KZ-31","IfcColumn",2,"F2-R",0.6,0.6,3.2,22,2,4.800000000000001],["2F 框架柱 KZ-32","IfcColumn",2,"F2-R",0.6,0.6,3.2,22,14,4.800000000000001],["2F 主梁 KL-1","IfcBeam",2,"F2-R",24,0.4,0.7,12,2,5.8500000000000005],["2F 主梁 KL-2","IfcBeam",2,"F2-R",24,0.4,0.7,12,14,5.8500000000000005],["2F 楼板 LB","IfcSlab",2,"F2-C",24,16,0.2,12,8,6.300000000000001],["2F 南外墙 Q-1","IfcWall",2,"A20",24,0.2,2.8000000000000003,12,0.1,4.6000000000000005],["2F 北外墙 Q-2","IfcWall",2,"A20",24,0.2,2.8000000000000003,12,15.9,4.6000000000000005],["2F 西外墙 Q-3","IfcWall",2,"A20",0.2,16,2.8000000000000003,0.1,8,4.6000000000000005],["2F 东外墙 Q-4","IfcWall",2,"A20",0.2,16,2.8000000000000003,23.9,8,4.6000000000000005],["2F 南窗 C-1","IfcWindow",2,"A25",2.2,0.3,1.5,6,0.1,4.9],["2F 北窗 C-3","IfcWindow",2,"A25",2.2,0.3,1.5,6,15.9,4.9],["2F 南窗 C-2","IfcWindow",2,"A25",2.2,0.3,1.5,18,0.1,4.9],["2F 北窗 C-4","IfcWindow",2,"A25",2.2,0.3,1.5,18,15.9,4.9],["2F 入口门 M-1","IfcDoor",2,"A25",1.4,0.3,2.2,12,0.1,4.300000000000001],["2F 给排水管线 P-1","IfcBuildingElementProxy",2,"A22",22,0.22,0.22,12,4.5,5.8500000000000005],["2F 给排水管线 P-2","IfcBuildingElementProxy",2,"A22",22,0.22,0.22,12,10.5,5.8500000000000005],["2F 通风管道 D-1","IfcBuildingElementProxy",2,"A23",22,0.5,0.4,12,7.5,5.45],["3F 框架柱 KZ-11","IfcColumn",3,"F3-R",0.6,0.6,3.2,2,2,8],["3F 框架柱 KZ-12","IfcColumn",3,"F3-R",0.6,0.6,3.2,2,14,8],["3F 框架柱 KZ-21","IfcColumn",3,"F3-R",0.6,0.6,3.2,12,2,8],["3F 框架柱 KZ-22","IfcColumn",3,"F3-R",0.6,0.6,3.2,12,14,8],["3F 框架柱 KZ-31","IfcColumn",3,"F3-R",0.6,0.6,3.2,22,2,8],["3F 框架柱 KZ-32","IfcColumn",3,"F3-R",0.6,0.6,3.2,22,14,8],["3F 主梁 KL-1","IfcBeam",3,"F3-R",24,0.4,0.7,12,2,9.050000000000002],["3F 主梁 KL-2","IfcBeam",3,"F3-R",24,0.4,0.7,12,14,9.050000000000002],["3F 楼板 LB","IfcSlab",3,"F3-C",24,16,0.2,12,8,9.500000000000002],["3F 南外墙 Q-1","IfcWall",3,"A20",24,0.2,2.8000000000000003,12,0.1,7.800000000000001],["3F 北外墙 Q-2","IfcWall",3,"A20",24,0.2,2.8000000000000003,12,15.9,7.800000000000001],["3F 西外墙 Q-3","IfcWall",3,"A20",0.2,16,2.8000000000000003,0.1,8,7.800000000000001],["3F 东外墙 Q-4","IfcWall",3,"A20",0.2,16,2.8000000000000003,23.9,8,7.800000000000001],["3F 南窗 C-1","IfcWindow",3,"A25",2.2,0.3,1.5,6,0.1,8.1],["3F 北窗 C-3","IfcWindow",3,"A25",2.2,0.3,1.5,6,15.9,8.1],["3F 南窗 C-2","IfcWindow",3,"A25",2.2,0.3,1.5,18,0.1,8.1],["3F 北窗 C-4","IfcWindow",3,"A25",2.2,0.3,1.5,18,15.9,8.1],["3F 入口门 M-1","IfcDoor",3,"A25",1.4,0.3,2.2,12,0.1,7.5],["3F 给排水管线 P-1","IfcBuildingElementProxy",3,"A22",22,0.22,0.22,12,4.5,9.05],["3F 给排水管线 P-2","IfcBuildingElementProxy",3,"A22",22,0.22,0.22,12,10.5,9.05],["3F 通风管道 D-1","IfcBuildingElementProxy",3,"A23",22,0.5,0.4,12,7.5,8.650000000000002],["4F 框架柱 KZ-11","IfcColumn",4,"F4-R",0.6,0.6,3.2,2,2,11.200000000000001],["4F 框架柱 KZ-12","IfcColumn",4,"F4-R",0.6,0.6,3.2,2,14,11.200000000000001],["4F 框架柱 KZ-21","IfcColumn",4,"F4-R",0.6,0.6,3.2,12,2,11.200000000000001],["4F 框架柱 KZ-22","IfcColumn",4,"F4-R",0.6,0.6,3.2,12,14,11.200000000000001],["4F 框架柱 KZ-31","IfcColumn",4,"F4-R",0.6,0.6,3.2,22,2,11.200000000000001],["4F 框架柱 KZ-32","IfcColumn",4,"F4-R",0.6,0.6,3.2,22,14,11.200000000000001],["4F 主梁 KL-1","IfcBeam",4,"F4-R",24,0.4,0.7,12,2,12.250000000000002],["4F 主梁 KL-2","IfcBeam",4,"F4-R",24,0.4,0.7,12,14,12.250000000000002],["4F 楼板 LB","IfcSlab",4,"F4-C",24,16,0.2,12,8,12.700000000000001],["4F 南外墙 Q-1","IfcWall",4,"A20",24,0.2,2.8000000000000003,12,0.1,11.000000000000002],["4F 北外墙 Q-2","IfcWall",4,"A20",24,0.2,2.8000000000000003,12,15.9,11.000000000000002],["4F 西外墙 Q-3","IfcWall",4,"A20",0.2,16,2.8000000000000003,0.1,8,11.000000000000002],["4F 东外墙 Q-4","IfcWall",4,"A20",0.2,16,2.8000000000000003,23.9,8,11.000000000000002],["4F 南窗 C-1","IfcWindow",4,"A25",2.2,0.3,1.5,6,0.1,11.3],["4F 北窗 C-3","IfcWindow",4,"A25",2.2,0.3,1.5,6,15.9,11.3],["4F 南窗 C-2","IfcWindow",4,"A25",2.2,0.3,1.5,18,0.1,11.3],["4F 北窗 C-4","IfcWindow",4,"A25",2.2,0.3,1.5,18,15.9,11.3],["4F 入口门 M-1","IfcDoor",4,"A25",1.4,0.3,2.2,12,0.1,10.700000000000001],["4F 给排水管线 P-1","IfcBuildingElementProxy",4,"A22",22,0.22,0.22,12,4.5,12.25],["4F 给排水管线 P-2","IfcBuildingElementProxy",4,"A22",22,0.22,0.22,12,10.5,12.25],["4F 通风管道 D-1","IfcBuildingElementProxy",4,"A23",22,0.5,0.4,12,7.5,11.850000000000001],["5F 框架柱 KZ-11","IfcColumn",5,"F5-R",0.6,0.6,3.2,2,2,14.4],["5F 框架柱 KZ-12","IfcColumn",5,"F5-R",0.6,0.6,3.2,2,14,14.4],["5F 框架柱 KZ-21","IfcColumn",5,"F5-R",0.6,0.6,3.2,12,2,14.4],["5F 框架柱 KZ-22","IfcColumn",5,"F5-R",0.6,0.6,3.2,12,14,14.4],["5F 框架柱 KZ-31","IfcColumn",5,"F5-R",0.6,0.6,3.2,22,2,14.4],["5F 框架柱 KZ-32","IfcColumn",5,"F5-R",0.6,0.6,3.2,22,14,14.4],["5F 主梁 KL-1","IfcBeam",5,"F5-R",24,0.4,0.7,12,2,15.450000000000001],["5F 主梁 KL-2","IfcBeam",5,"F5-R",24,0.4,0.7,12,14,15.450000000000001],["5F 楼板 LB","IfcSlab",5,"F5-C",24,16,0.2,12,8,15.9],["5F 南外墙 Q-1","IfcWall",5,"A20",24,0.2,2.8000000000000003,12,0.1,14.200000000000001],["5F 北外墙 Q-2","IfcWall",5,"A20",24,0.2,2.8000000000000003,12,15.9,14.200000000000001],["5F 西外墙 Q-3","IfcWall",5,"A20",0.2,16,2.8000000000000003,0.1,8,14.200000000000001],["5F 东外墙 Q-4","IfcWall",5,"A20",0.2,16,2.8000000000000003,23.9,8,14.200000000000001],["5F 南窗 C-1","IfcWindow",5,"A25",2.2,0.3,1.5,6,0.1,14.5],["5F 北窗 C-3","IfcWindow",5,"A25",2.2,0.3,1.5,6,15.9,14.5],["5F 南窗 C-2","IfcWindow",5,"A25",2.2,0.3,1.5,18,0.1,14.5],["5F 北窗 C-4","IfcWindow",5,"A25",2.2,0.3,1.5,18,15.9,14.5],["5F 入口门 M-1","IfcDoor",5,"A25",1.4,0.3,2.2,12,0.1,13.9],["5F 给排水管线 P-1","IfcBuildingElementProxy",5,"A22",22,0.22,0.22,12,4.5,15.45],["5F 给排水管线 P-2","IfcBuildingElementProxy",5,"A22",22,0.22,0.22,12,10.5,15.45],["5F 通风管道 D-1","IfcBuildingElementProxy",5,"A23",22,0.5,0.4,12,7.5,15.05],["6F 框架柱 KZ-11","IfcColumn",6,"F6-R",0.6,0.6,3.2,2,2,17.6],["6F 框架柱 KZ-12","IfcColumn",6,"F6-R",0.6,0.6,3.2,2,14,17.6],["6F 框架柱 KZ-21","IfcColumn",6,"F6-R",0.6,0.6,3.2,12,2,17.6],["6F 框架柱 KZ-22","IfcColumn",6,"F6-R",0.6,0.6,3.2,12,14,17.6],["6F 框架柱 KZ-31","IfcColumn",6,"F6-R",0.6,0.6,3.2,22,2,17.6],["6F 框架柱 KZ-32","IfcColumn",6,"F6-R",0.6,0.6,3.2,22,14,17.6],["6F 主梁 KL-1","IfcBeam",6,"F6-R",24,0.4,0.7,12,2,18.650000000000002],["6F 主梁 KL-2","IfcBeam",6,"F6-R",24,0.4,0.7,12,14,18.650000000000002],["6F 楼板 LB","IfcSlab",6,"F6-C",24,16,0.2,12,8,19.1],["6F 南外墙 Q-1","IfcWall",6,"A20",24,0.2,2.8000000000000003,12,0.1,17.4],["6F 北外墙 Q-2","IfcWall",6,"A20",24,0.2,2.8000000000000003,12,15.9,17.4],["6F 西外墙 Q-3","IfcWall",6,"A20",0.2,16,2.8000000000000003,0.1,8,17.4],["6F 东外墙 Q-4","IfcWall",6,"A20",0.2,16,2.8000000000000003,23.9,8,17.4],["6F 南窗 C-1","IfcWindow",6,"A25",2.2,0.3,1.5,6,0.1,17.7],["6F 北窗 C-3","IfcWindow",6,"A25",2.2,0.3,1.5,6,15.9,17.7],["6F 南窗 C-2","IfcWindow",6,"A25",2.2,0.3,1.5,18,0.1,17.7],["6F 北窗 C-4","IfcWindow",6,"A25",2.2,0.3,1.5,18,15.9,17.7],["6F 入口门 M-1","IfcDoor",6,"A25",1.4,0.3,2.2,12,0.1,17.1],["6F 给排水管线 P-1","IfcBuildingElementProxy",6,"A22",22,0.22,0.22,12,4.5,18.650000000000002],["6F 给排水管线 P-2","IfcBuildingElementProxy",6,"A22",22,0.22,0.22,12,10.5,18.650000000000002],["6F 通风管道 D-1","IfcBuildingElementProxy",6,"A23",22,0.5,0.4,12,7.5,18.250000000000004],["机电竖井立管 P-0","IfcBuildingElementProxy",1,"A22",0.3,0.3,18.800000000000004,23.4,15.4,9.400000000000002],["屋面构造层 WM","IfcRoof",6,"A21",24.6,16.6,0.3,12,8,19.35],["屋面女儿墙-南","IfcWall",6,"A21",24.6,0.2,0.5,12,-0.2,19.750000000000004],["屋面女儿墙-北","IfcWall",6,"A21",24.6,0.2,0.5,12,16.2,19.750000000000004],["屋面女儿墙-西","IfcWall",6,"A21",0.2,16.6,0.5,-0.2,8,19.750000000000004],["屋面女儿墙-东","IfcWall",6,"A21",0.2,16.6,0.5,24.2,8,19.750000000000004]],"activities":{"A01":{"code":"1.1","name":"施工准备与场地平整","start":0,"finish":3,"sd":"2026-03-02","fd":"2026-03-05","critical":true},"A02":{"code":"1.2","name":"土方开挖","start":4,"finish":10,"sd":"2026-03-06","fd":"2026-03-16","critical":true},"A03":{"code":"1.3","name":"垫层与基础防水","start":11,"finish":15,"sd":"2026-03-17","fd":"2026-03-23","critical":true},"A04":{"code":"2.1","name":"基础钢筋绑扎","start":16,"finish":22,"sd":"2026-03-24","fd":"2026-04-01","critical":true},"A05":{"code":"2.2","name":"基础模板安装","start":23,"finish":27,"sd":"2026-04-02","fd":"2026-04-08","critical":true},"A06":{"code":"2.3","name":"基础混凝土浇筑","start":28,"finish":30,"sd":"2026-04-09","fd":"2026-04-13","critical":true},"A07":{"code":"2.4","name":"基础回填","start":31,"finish":34,"sd":"2026-04-14","fd":"2026-04-17","critical":true},"F1-R":{"code":"3.1.1","name":"1F 柱墙梁板钢筋与模板","start":35,"finish":40,"sd":"2026-04-20","fd":"2026-04-27","critical":true},"F1-C":{"code":"3.1.2","name":"1F 楼板混凝土浇筑","start":41,"finish":43,"sd":"2026-04-28","fd":"2026-04-30","critical":true},"F2-R":{"code":"3.2.1","name":"2F 柱墙梁板钢筋与模板","start":44,"finish":49,"sd":"2026-05-01","fd":"2026-05-08","critical":true},"F2-C":{"code":"3.2.2","name":"2F 楼板混凝土浇筑","start":50,"finish":52,"sd":"2026-05-11","fd":"2026-05-13","critical":true},"F3-R":{"code":"3.3.1","name":"3F 柱墙梁板钢筋与模板","start":53,"finish":58,"sd":"2026-05-14","fd":"2026-05-21","critical":true},"F3-C":{"code":"3.3.2","name":"3F 楼板混凝土浇筑","start":59,"finish":61,"sd":"2026-05-22","fd":"2026-05-26","critical":true},"F4-R":{"code":"3.4.1","name":"4F 柱墙梁板钢筋与模板","start":62,"finish":67,"sd":"2026-05-27","fd":"2026-06-03","critical":true},"F4-C":{"code":"3.4.2","name":"4F 楼板混凝土浇筑","start":68,"finish":70,"sd":"2026-06-04","fd":"2026-06-08","critical":true},"F5-R":{"code":"3.5.1","name":"5F 柱墙梁板钢筋与模板","start":71,"finish":76,"sd":"2026-06-09","fd":"2026-06-16","critical":true},"F5-C":{"code":"3.5.2","name":"5F 楼板混凝土浇筑","start":77,"finish":79,"sd":"2026-06-17","fd":"2026-06-19","critical":true},"F6-R":{"code":"3.6.1","name":"6F 柱墙梁板钢筋与模板","start":80,"finish":85,"sd":"2026-06-22","fd":"2026-06-29","critical":true},"F6-C":{"code":"3.6.2","name":"6F 楼板混凝土浇筑","start":86,"finish":88,"sd":"2026-06-30","fd":"2026-07-02","critical":true},"A20":{"code":"4.1","name":"砌体工程","start":62,"finish":73,"sd":"2026-05-27","fd":"2026-06-11","critical":false},"A21":{"code":"4.2","name":"屋面工程","start":89,"finish":96,"sd":"2026-07-03","fd":"2026-07-14","critical":true},"A22":{"code":"5.1","name":"机电预留预埋与管道","start":52,"finish":69,"sd":"2026-05-13","fd":"2026-06-05","critical":false},"A23":{"code":"5.2","name":"电气与暖通安装","start":62,"finish":77,"sd":"2026-05-27","fd":"2026-06-17","critical":false},"A24":{"code":"6.1","name":"室内抹灰","start":68,"finish":79,"sd":"2026-06-04","fd":"2026-06-19","critical":false},"A25":{"code":"6.2","name":"门窗安装","start":72,"finish":79,"sd":"2026-06-10","fd":"2026-06-19","critical":false},"A26":{"code":"6.3","name":"精装修","start":76,"finish":89,"sd":"2026-06-16","fd":"2026-07-03","critical":false},"A27":{"code":"7.1","name":"室外工程","start":94,"finish":103,"sd":"2026-07-10","fd":"2026-07-23","critical":true},"A28":{"code":"7.2","name":"系统调试","start":90,"finish":95,"sd":"2026-07-06","fd":"2026-07-13","critical":false},"A29":{"code":"7.3","name":"竣工验收","start":104,"finish":104,"sd":"2026-07-24","fd":"2026-07-24","critical":true}},"gates":{"1":"F1-C","2":"F2-C","3":"F3-C","4":"F4-C","5":"F5-C","6":"F6-C"},"workdays":["2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-09","2026-03-10","2026-03-11","2026-03-12","2026-03-13","2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-30","2026-03-31","2026-04-01","2026-04-02","2026-04-03","2026-04-06","2026-04-07","2026-04-08","2026-04-09","2026-04-10","2026-04-13","2026-04-14","2026-04-15","2026-04-16","2026-04-17","2026-04-20","2026-04-21","2026-04-22","2026-04-23","2026-04-24","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-11","2026-05-12","2026-05-13","2026-05-14","2026-05-15","2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-25","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-06-01","2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-03","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24"],"total":105,"startIndex":75,"dataDate":"2026-06-15","floors":[{"level":1,"label":"1F","count":28},{"level":2,"label":"2F","count":21},{"level":3,"label":"3F","count":21},{"level":4,"label":"4F","count":21},{"level":5,"label":"5F","count":21},{"level":6,"label":"6F","count":26}]};
+</script>
+<script>
+(function () {
+  var M = window.__APCC__;
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('bim-svg');
+  var range = document.getElementById('bim-range');
+  var dateEl = document.getElementById('bim-date');
+  var dayEl = document.getElementById('bim-day');
+  var info = document.getElementById('bim-info');
+  var levelsEl = document.getElementById('bim-levels');
+  var playBtn = document.getElementById('bim-play');
+  var resetBtn = document.getElementById('bim-reset');
+  if (!svg || !M) return;
+
+  var SCALE = 15;
+  var COS = Math.cos(Math.PI / 6);
+  var SIN = 0.5;
+  var PHASE = { done: '#0f9d76', active: '#e08a1e', planned: '#c3cedd' };
+  var SHADES = { top: 1.14, right: 0.86, front: 0.68 };
+  var GATED = { IfcWall: 1, IfcWindow: 1, IfcDoor: 1, IfcRoof: 1, IfcBuildingElementProxy: 1 };
+  var TYPE_LABEL = { IfcSlab: '楼板', IfcColumn: '框架柱', IfcBeam: '主梁', IfcFooting: '承台', IfcWall: '墙体', IfcWindow: '窗', IfcDoor: '门', IfcRoof: '屋面', IfcBuildingElementProxy: '机电管线' };
+  var ENVELOPE = { IfcWall: 1, IfcWindow: 1, IfcDoor: 1 };
+
+  M.elements = M.elements.map(function (e) {
+    return { name: e[0], type: e[1], level: e[2], activityId: e[3], s: { x: e[4], y: e[5], z: e[6] }, p: { x: e[7], y: e[8], z: e[9] } };
+  });
+
+  function project(p) {
+    return [ (p.x - p.y) * COS * SCALE, ((p.x + p.y) * SIN - p.z) * SCALE ];
+  }
+  function shade(hex, factor) {
+    var n = parseInt(hex.slice(1), 16);
+    var r = Math.min(255, Math.round(((n >> 16) & 255) * factor));
+    var g = Math.min(255, Math.round(((n >> 8) & 255) * factor));
+    var b = Math.min(255, Math.round((n & 255) * factor));
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+  var COLORS = {};
+  Object.keys(PHASE).forEach(function (phase) {
+    COLORS[phase] = {};
+    Object.keys(SHADES).forEach(function (face) {
+      COLORS[phase][face] = shade(PHASE[phase], SHADES[face]);
+    });
+  });
+
+  function boxFaces(e) {
+    var x0 = e.p.x - e.s.x / 2, x1 = e.p.x + e.s.x / 2;
+    var y0 = e.p.y - e.s.y / 2, y1 = e.p.y + e.s.y / 2;
+    var z0 = e.p.z - e.s.z / 2, z1 = e.p.z + e.s.z / 2;
+    return [
+      { face: 'top', pts: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] },
+      { face: 'right', pts: [[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]] },
+      { face: 'front', pts: [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]] }
+    ];
+  }
+
+  var faces = [];
+  M.elements.forEach(function (e, index) {
+    boxFaces(e).forEach(function (face) {
+      var sum = 0;
+      var points = face.pts.map(function (p) { sum += p[0] + p[1] + p[2]; return project({ x: p[0], y: p[1], z: p[2] }); });
+      faces.push({ index: index, face: face.face, points: points, depth: sum / 4 });
+    });
+  });
+  faces.sort(function (a, b) { return a.depth - b.depth; });
+
+  var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  faces.forEach(function (f) {
+    f.points.forEach(function (p) {
+      minX = Math.min(minX, p[0]); minY = Math.min(minY, p[1]);
+      maxX = Math.max(maxX, p[0]); maxY = Math.max(maxY, p[1]);
+    });
+  });
+  var pad = 24;
+  svg.setAttribute('viewBox', (minX - pad) + ' ' + (minY - pad) + ' ' + (maxX - minX + pad * 2) + ' ' + (maxY - minY + pad * 2));
+
+  var group = document.createElementNS(NS, 'g');
+  svg.appendChild(group);
+  var nodes = [];
+  M.elements.forEach(function () { nodes.push([]); });
+  faces.forEach(function (f) {
+    var poly = document.createElementNS(NS, 'polygon');
+    poly.setAttribute('points', f.points.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '));
+    poly.setAttribute('data-i', f.index);
+    poly.setAttribute('data-f', f.face);
+    poly.setAttribute('fill', COLORS.planned[f.face]);
+    var title = document.createElementNS(NS, 'title');
+    title.textContent = M.elements[f.index].name;
+    poly.appendChild(title);
+    group.appendChild(poly);
+    nodes[f.index].push(poly);
+  });
+
+  function phaseAt(activityId, index) {
+    var a = M.activities[activityId];
+    if (!a) return { phase: 'planned' };
+    if (index >= a.finish) return { phase: 'done' };
+    if (index >= a.start) return { phase: 'active' };
+    return { phase: 'planned' };
+  }
+  function progressOf(e, index) {
+    var own = phaseAt(e.activityId, index);
+    if (!GATED[e.type]) return own;
+    var gateId = M.gates[e.level];
+    var gate = gateId ? phaseAt(gateId, index) : null;
+    if (!gate) return own;
+    var rank = { planned: 0, active: 1, done: 2 };
+    if (rank[gate.phase] < rank[own.phase]) return gate;
+    return own;
+  }
+
+  var selected = -1;
+  function opacityOf(e, phase) {
+    if (phase === 'planned') return 0.4;
+    if (ENVELOPE[e.type]) return 0.46;
+    if (e.type === 'IfcBuildingElementProxy') return 0.82;
+    return 0.95;
+  }
+  function paint(index) {
+    var stats = {};
+    M.floors.forEach(function (f) { stats[f.level] = { done: 0, active: 0, count: f.count }; });
+    M.elements.forEach(function (e, i) {
+      var progress = progressOf(e, index);
+      var opacity = opacityOf(e, progress.phase);
+      if (i === selected) opacity = Math.max(opacity, 0.9);
+      nodes[i].forEach(function (poly) {
+        var face = poly.getAttribute('data-f');
+        poly.setAttribute('fill', COLORS[progress.phase][face]);
+        poly.setAttribute('fill-opacity', opacity.toFixed(2));
+        if (i === selected) poly.classList.add('sel'); else poly.classList.remove('sel');
+      });
+      var bucket = stats[e.level];
+      if (bucket) {
+        if (progress.phase === 'done') bucket.done += 1;
+        else if (progress.phase === 'active') bucket.active += 1;
+      }
+    });
+    dateEl.textContent = M.workdays[index] || M.dataDate;
+    dayEl.textContent = (index + 1) + ' / ' + M.total + ' 工作日';
+    levelsEl.innerHTML = M.floors.slice().reverse().map(function (f) {
+      var s = stats[f.level];
+      var pctDone = (s.done / s.count) * 100;
+      var pctActive = (s.active / s.count) * 100;
+      return '<div class="lvl"><span>' + f.label + '</span><div class="track">' +
+        '<i class="done" style="width:' + pctDone.toFixed(1) + '%"></i>' +
+        '<i class="active" style="width:' + pctActive.toFixed(1) + '%"></i>' +
+        '</div><b>' + (s.done + s.active) + '/' + s.count + '</b></div>';
+    }).join('');
+    if (selected >= 0) showInfo(selected, index);
+  }
+
+  function showInfo(i, index) {
+    var e = M.elements[i];
+    var activity = M.activities[e.activityId];
+    var progress = progressOf(e, index);
+    var label = progress.phase === 'done' ? '已完成' : progress.phase === 'active' ? '进行中' : '未开始';
+    info.innerHTML = '<b>' + e.name + '</b><p>' + TYPE_LABEL[e.type] + ' · ' + e.level + 'F</p>' +
+      '<p>关联活动：' + (activity ? activity.code + ' ' + activity.name : '未绑定') + '</p>' +
+      (activity ? '<p>计划窗口：' + activity.sd + ' → ' + activity.fd + '</p>' : '') +
+      '<p>当日状态：' + label + '</p>';
+  }
+
+  svg.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!target || target.tagName.toLowerCase() !== 'polygon') return;
+    var index = Number(target.getAttribute('data-i'));
+    selected = index === selected ? -1 : index;
+    paint(Number(range.value));
+    if (selected < 0) info.textContent = '点击模型中的构件，查看其关联的进度活动。';
+  });
+
+  var timer = null;
+  function stop() {
+    if (timer) { clearInterval(timer); timer = null; }
+    playBtn.textContent = '播放';
+  }
+  playBtn.addEventListener('click', function () {
+    if (timer) { stop(); return; }
+    if (Number(range.value) >= M.total - 1) range.value = '0';
+    playBtn.textContent = '暂停';
+    timer = setInterval(function () {
+      var next = Number(range.value) + 1;
+      if (next >= M.total) { stop(); return; }
+      range.value = String(next);
+      paint(next);
+    }, 160);
+  });
+  resetBtn.addEventListener('click', function () {
+    stop();
+    range.value = String(M.startIndex);
+    paint(M.startIndex);
+  });
+  range.addEventListener('input', function () {
+    stop();
+    paint(Number(range.value));
+  });
+
+  paint(Number(range.value));
+})();
+</script>
+</body>
+</html>
